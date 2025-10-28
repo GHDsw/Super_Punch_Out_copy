@@ -6,7 +6,7 @@ class Rings:
         self.image = load_image('test_ring.png')
 
     def draw(self):
-        self.image.draw(400, 30)
+        self.image.draw(400, 300)
 
     def update(self):
         pass
