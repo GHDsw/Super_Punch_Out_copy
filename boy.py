@@ -1,5 +1,6 @@
 from pico2d import load_image, get_time
 from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT
+import math
 
 import game_world
 from ball import Ball, BigBall
@@ -26,7 +27,9 @@ def left_down(e):
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
-
+#x1, y1, x2, y2
+sprite_size = {'IDLE':[[154,395], [225,538]],
+               'blank':[[0,0],[0,0]]}
 
 
 
@@ -47,8 +50,22 @@ class Idle:
 
 
     def do(self):
-        #self.boy.frame = (self.boy.frame + 1) % 8
-        self.boy.x = 400
+        # self.boy.frame = (self.boy.frame + 1) % 8
+        t = get_time()
+        base_x, base_y = 400, 90
+        r_x, r_y = 8, 4
+
+        # speed: 0 -> pi 이동이 1/speed 초 걸림 (예: speed = 0.5 -> 2초)
+        speed = 0.5
+
+        # phase: 0 .. 2 범위를 주기적으로 만듦
+        phase = (t * speed) % 2.0
+        # triangle wave로 0 .. 1 .. 0 으로 변환 (일정한 속도)
+        u = phase if phase <= 1.0 else 2.0 - phase
+        angle = u * math.pi
+
+        self.boy.x = base_x + r_x * math.cos(angle)
+        self.boy.y = base_y + r_y * math.sin(angle)
 
     def draw(self):
         # original code
@@ -56,8 +73,17 @@ class Idle:
         #     self.boy.image.clip_draw(self.boy.frame * 100, 300, 100, 100, self.boy.x, self.boy.y)
         # else: # face_dir == -1: # left
         #     self.boy.image.clip_draw(self.boy.frame * 100, 200, 100, 100, self.boy.x, self.boy.y)
-        self.boy.image.draw(self.boy.x, self.boy.y)
 
+        sx, sy = sprite_size['IDLE'][0]  # 좌상 (x1, y1)
+        ex, ey = sprite_size['IDLE'][1]  # 우하 (x2, y2)
+
+        img_h = self.boy.image.h  # 이미지 전체 높이
+        clip_x = sx
+        clip_y = img_h - ey - 1  # top-based y -> bottom-based y 변환
+        clip_w = ex - sx + 1
+        clip_h = ey - sy + 1
+
+        self.boy.image.clip_draw(clip_x, clip_y, clip_w, clip_h, self.boy.x, self.boy.y)
 
 class Move:
     def __init__(self, boy):
@@ -100,7 +126,7 @@ class Boy:
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
-        self.image = load_image('test_lm.png')
+        self.image = load_image('Little_Mac.png')
 
         self.IDLE = Idle(self)
         self.MOVE = Move(self)
