@@ -28,7 +28,8 @@ def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
 #x1, y1, x2, y2
-sprite_size = {'IDLE':[[154,395], [225,538]],
+sprite_size = {'IDle':[[154,395], [225,538]],
+               'Move':[[186,250],[249,385]],
                'blank':[[0,0],[0,0]]}
 
 
@@ -74,8 +75,8 @@ class Idle:
         # else: # face_dir == -1: # left
         #     self.boy.image.clip_draw(self.boy.frame * 100, 200, 100, 100, self.boy.x, self.boy.y)
 
-        sx, sy = sprite_size['IDLE'][0]  # 좌상 (x1, y1)
-        ex, ey = sprite_size['IDLE'][1]  # 우하 (x2, y2)
+        sx, sy = sprite_size['IDle'][0]  # 좌상 (x1, y1)
+        ex, ey = sprite_size['IDle'][1]  # 우하 (x2, y2)
 
         img_h = self.boy.image.h  # 이미지 전체 높이
         clip_x = sx
@@ -91,9 +92,9 @@ class Move:
 
     def enter(self, e):
         if right_down(e) or left_up(e):
-            self.boy.dir = self.boy.face_dir = 1
+            self.boy.dir = 1
         elif left_down(e) or right_up(e):
-            self.boy.dir = self.boy.face_dir = -1
+            self.boy.dir = -1
 
     def exit(self, e):
         if space_down(e):
@@ -110,8 +111,22 @@ class Move:
         #     self.boy.image.clip_draw(self.boy.frame * 100, 100, 100, 100, self.boy.x, self.boy.y)
         # else: # face_dir == -1: # left
         #     self.boy.image.clip_draw(self.boy.frame * 100, 0, 100, 100, self.boy.x, self.boy.y)
-        self.boy.image.draw(self.boy.x, self.boy.y)
+        sx, sy = sprite_size['Move'][0]  # 좌상 (x1, y1)
+        ex, ey = sprite_size['Move'][1]  # 우하 (x2, y2)
 
+        img_h = self.boy.image.h  # 이미지 전체 높이
+        clip_x = sx
+        clip_y = img_h - ey - 1  # top-based y -> bottom-based y 변환
+        clip_w = ex - sx + 1
+        clip_h = ey - sy + 1
+
+        print(f'{clip_x}, {clip_y}, {clip_w}, {clip_h}')
+
+        if self.boy.dir == 1:
+            self.boy.image.clip_composite_draw(clip_x, clip_y, clip_w, clip_h,
+                                               0, 'h', self.boy.x, self.boy.y, clip_w,clip_h)
+        elif self.boy.dir == -1:
+            self.boy.image.clip_draw(clip_x, clip_y, clip_w, clip_h, self.boy.x, self.boy.y)
 
 
 
