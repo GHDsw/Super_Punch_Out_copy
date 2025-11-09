@@ -56,7 +56,7 @@ def draw():
     # 20,356 , 257,579 -> 296,356 , 551,579
     # 각 프레임은 20*20 차이
     #image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
-    image.clip_draw(clip_w*(int(frame)%8)+gap*(int(frame)%8+1),
+    image.clip_draw(clip_x + clip_w*(int(frame)%8)+gap*(int(frame)%8),
                     clip_y-(clip_h*(int(frame)//8)+gap*(int(frame)//8)),
                     clip_w, clip_h, 400, 300)
     update_canvas()
