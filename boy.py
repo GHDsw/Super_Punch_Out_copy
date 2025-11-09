@@ -104,32 +104,6 @@ class Idle:
             self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
 
 
-class Sleep:
-
-    def __init__(self, boy):
-        self.boy = boy
-
-    def enter(self, e):
-        pass
-
-    def exit(self, e):
-        pass
-
-    def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-
-
-    def handle_event(self, event):
-        pass
-
-    def draw(self):
-        if self.boy.face_dir == 1:
-            self.boy.image.clip_composite_draw(int(self.boy.frame) * 100, 300, 100, 100, 3.141592/2, '', self.boy.x - 25, self.boy.y - 25, 100, 100)
-        else:
-            self.boy.image.clip_composite_draw(int(self.boy.frame) * 100, 200, 100, 100, -3.141592/2, '', self.boy.x + 25, self.boy.y - 25, 100, 100)
-
-
-
 class Run:
     def __init__(self, boy):
         self.boy = boy
@@ -174,13 +148,11 @@ class Boy:
         self.image = load_image('./image/Little_Mac.png')
 
         self.IDLE = Idle(self)
-        self.SLEEP = Sleep(self)
         self.RUN = Run(self)
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.SLEEP : {space_down: self.IDLE},
-                self.IDLE : {space_down: self.IDLE, time_out: self.SLEEP, right_down: self.RUN, left_down: self.RUN, right_up: self.RUN, left_up: self.RUN},
+                self.IDLE : {space_down: self.IDLE, right_down: self.RUN, left_down: self.RUN, right_up: self.RUN, left_up: self.RUN},
                 self.RUN : {space_down: self.RUN, right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE}
             }
         )

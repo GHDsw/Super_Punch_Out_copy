@@ -23,8 +23,8 @@ def handle_events():
 
 def init():
     global boy
-    global balls
-    global zombies
+    #global balls
+    # global zombies
 
     grass = Grass()
     game_world.add_object(grass, 0)
@@ -33,24 +33,24 @@ def init():
     boy = Boy()
     game_world.add_object(boy, 1)
 
-    balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
-    game_world.add_objects(balls, 1)
-    game_world.add_collision_pair('boy:zombie', boy, None)
+    # balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
+    # game_world.add_objects(balls, 1)
+    # game_world.add_collision_pair('boy:zombie', boy, None)
 
     #boy와 ball 사이의 충돌 검사가 필요하다는 정보 추가
-    game_world.add_collision_pair('boy:ball',boy, None)
-    for ball in balls:
-        if ball.y > 60:
-            game_world.add_collision_pair('zombie:ball', None, ball)
-        else:
-            game_world.add_collision_pair('boy:ball', None, ball)
+    # game_world.add_collision_pair('boy:ball',boy, None)
+    # for ball in balls:
+    #     if ball.y > 60:
+    #         game_world.add_collision_pair('zombie:ball', None, ball)
+    #     else:
+    #         game_world.add_collision_pair('boy:ball', None, ball)
 
-    zombies = [Zombie() for i in range(4)]
-    game_world.add_objects(zombies, 1)
-
-    for zombie in zombies:
-        game_world.add_collision_pair('zombie:ball', zombie, None)
-        game_world.add_collision_pair('boy:zombie', None, zombie)
+    # zombies = [Zombie() for i in range(4)]
+    # game_world.add_objects(zombies, 1)
+    #
+    # for zombie in zombies:
+    #     game_world.add_collision_pair('zombie:ball', zombie, None)
+    #     game_world.add_collision_pair('boy:zombie', None, zombie)
 
 
 def update():
