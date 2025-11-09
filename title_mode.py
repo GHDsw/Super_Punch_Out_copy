@@ -7,9 +7,10 @@ sprite_size = {'ring': [[1124, 66], [1379, 289]],
                'title': [[20, 66], [275,289]],
                }
 
-TIME_PER_ACTION = 10
+TIME_PER_ACTION = 1
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 22
+FRAMES_PER_ACTION_ring = 4
+FRAMES_PER_ACTION_logo = 3
 
 image = None
 title_start_time = 0.0
@@ -40,9 +41,9 @@ def update():
         game_framework.change_mode(play_mode)
 
     global frame_ring
-    frame_ring = (frame_ring + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+    frame_ring = (frame_ring + FRAMES_PER_ACTION_ring * ACTION_PER_TIME * game_framework.frame_time) % 4
     global frame_logo
-    frame_logo = (frame_logo + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 3
+    frame_logo = (frame_logo + FRAMES_PER_ACTION_logo * ACTION_PER_TIME * game_framework.frame_time) % 3
     pass
 
 def draw():
