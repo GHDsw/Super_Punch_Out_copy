@@ -14,7 +14,7 @@ def resume():
 def init():
     global image
 
-    image = load_image('test_title.png')
+    image = load_image('./image/Intro, Ending, Menus, Fonts.png')
 
 def finish():
     global image

@@ -3,6 +3,9 @@ from pico2d import *
 
 import title_mode
 
+sprite_size = {'intro': [[0, 0], [0, 0]],
+               }
+
 image = None
 intro_start_time = 0.0
 
@@ -15,7 +18,7 @@ def resume():
 def init():
     global image, intro_start_time
 
-    image = load_image('test_intro.png')
+    image = load_image('./image/Intro, Ending, Menus, Fonts.png')
     intro_start_time = get_time()
 
 def finish():
@@ -34,7 +37,11 @@ def draw():
     update_canvas()
 
 def handle_events():
-    #딱히 동작도 안하는데 입력을 받는 이유
-    #pico2d가 내부적으로 이벤트 큐를 관리하기 때문에
-    #이벤트 큐가 쌓이지 않도록 주기적으로 비워줘야 한다
     events = get_events()
+    for event in events:
+        if event.type == SDL_QUIT:
+            game_framework.quit()
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
+            game_framework.quit()
+        elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            game_framework.change_mode(title_mode)
