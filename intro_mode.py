@@ -39,7 +39,11 @@ def update():
         game_framework.change_mode(title_mode)
 
     global frame
-    frame = (frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%22
+    global ACTION_PER_TIME
+    if frame > 6:
+        ACTION_PER_TIME = 1.0 / TIME_PER_ACTION * 10
+
+    frame = (frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 22
 
 def draw():
     clear_canvas()

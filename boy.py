@@ -1,5 +1,5 @@
 from pico2d import load_image, get_time, load_font, draw_rectangle
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_UP, SDLK_DOWN, SDLK_z, SDLK_x
 
 import game_world
 import game_framework
@@ -28,7 +28,23 @@ def left_down(e):
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
+def up_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
 
+def up_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_UP
+
+def down_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+
+def down_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
+
+def z_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_z
+
+def x_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_x
 
 # Boy의 Run Speed 계산
 
@@ -84,12 +100,18 @@ class Idle:
 
     def enter(self, e):
         self.boy.wait_time = get_time()
-        self.boy.dir = 0
+        if up_down(e):
+            self.boy.face_dir = 1
+        elif down_down(e):
+            self.boy.face_dir = -1
+        else:
+            self.boy.dir = 0
 
 
     def exit(self, e):
-        if space_down(e):
-            self.boy.fire_ball()
+        # if space_down(e):
+        #     self.boy.fire_ball()
+        pass
 
 
     def do(self):
@@ -98,40 +120,70 @@ class Idle:
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
 
     def draw(self):
-        if self.boy.face_dir == 1: # right
+        if self.boy.face_dir == 1: # up
             self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
-        else: # face_dir == -1: # left
+        elif self.boy.face_dir == -1: # down
+            self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
+        else: #진짜 idle
             self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
 
 
-class Run:
+class Move:
     def __init__(self, boy):
         self.boy = boy
 
     def enter(self, e):
         if right_down(e) or left_up(e):
-            self.boy.dir = self.boy.face_dir = 1
+            self.boy.dir = 1
         elif left_down(e) or right_up(e):
-            self.boy.dir = self.boy.face_dir = -1
+            self.boy.dir = -1
 
     def exit(self, e):
-        if space_down(e):
-            self.boy.fire_ball()
+        # if space_down(e):
+        #     self.boy.fire_ball()
+        pass
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
 
     def draw(self):
-        if self.boy.face_dir == 1: # right
+        if self.boy.dir == 1: # right
             self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
         else: # face_dir == -1: # left
             self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
 
+class Attack:
+    def __init__(self, boy):
+        self.boy = boy
 
+    def enter(self, e):
+        if x_down(e):
+            self.boy.dir = 1
+        elif z_down(e):
+            self.boy.dir = -1
+        pass
 
+    def exit(self, e):
+        # if space_down(e):
+        #     self.boy.fire_ball()
+        pass
 
+    def do(self):
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
 
+    def draw(self):
+        if self.boy.dir == 1: # right
+            if self.boy.face_dir == 1: #upper
+                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
+            else: #0,-1 body attack
+                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
+        else: # face_dir == -1: # left
+            if self.boy.face_dir == 1:
+                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
+            if self.boy.face_dir == -1:
+                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
 
 
 class Boy:
@@ -148,12 +200,16 @@ class Boy:
         self.image = load_image('./image/Little_Mac.png')
 
         self.IDLE = Idle(self)
-        self.RUN = Run(self)
+        self.MOVE = Move(self)
+        self.ATTACK = Attack(self)
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {space_down: self.IDLE, right_down: self.RUN, left_down: self.RUN, right_up: self.RUN, left_up: self.RUN},
-                self.RUN : {space_down: self.RUN, right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE}
+                self.IDLE : {up_down: self.IDLE, down_down: self.IDLE,
+                             z_down: self.ATTACK, x_down: self.ATTACK,
+                    right_down: self.MOVE, left_down: self.MOVE},
+                self.MOVE : {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE
+                             }
             }
         )
 
@@ -176,24 +232,15 @@ class Boy:
         # 따라서 *을 붙여서 튜플을 언패킹하여 4개의 인자로 전달해준다.
         draw_rectangle(*self.get_bb())
 
-    def fire_ball(self):
-        if self.ball_count > 0:
-            self.ball_count -= 1
-            ball = Ball(self.x+self.face_dir*40, self.y+100, self.face_dir * 15)
-            game_world.add_object(ball, 1)
-            game_world.add_collision_pair('grass:ball', None, ball)
-            game_world.add_collision_pair('boy:ball', None, ball)
-            game_world.add_collision_pair('zombie:ball', None, ball)
-
     def get_bb(self):
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현
         return self.x - 20, self.y - 50, self.x + 20, self.y + 40
 
-    def handle_collision(self, group, other):
-        if group == 'boy:ball':
-            self.ball_count += 1
-            # 충돌한 ball은 ball 자신이 제거하도록
-        if group == 'boy:zombie':
-            # 게임 종료 처리
-            game_framework.quit()
-            pass
+    # def handle_collision(self, group, other):
+    #     if group == 'boy:ball':
+    #         self.ball_count += 1
+    #         # 충돌한 ball은 ball 자신이 제거하도록
+    #     if group == 'boy:zombie':
+    #         # 게임 종료 처리
+    #         game_framework.quit()
+    #         pass
