@@ -5,7 +5,7 @@ import game_framework
 import game_world
 
 from boy import Boy
-from grass import Grass
+from rings import Rings
 from ball import Ball
 from zombie import Zombie
 
@@ -26,9 +26,9 @@ def init():
     #global balls
     # global zombies
 
-    grass = Grass()
-    game_world.add_object(grass, 0)
-    game_world.add_collision_pair('grass:ball', grass, None)
+    rings = Rings()
+    game_world.add_object(rings, 0)
+    game_world.add_collision_pair('grass:ball', rings, None)
 
     boy = Boy()
     game_world.add_object(boy, 1)

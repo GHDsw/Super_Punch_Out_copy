@@ -15,7 +15,7 @@ FRAMES_PER_ACTION = 4
 
 image = None
 
-class Grass:
+class Rings:
     def __init__(self):
 
         self.image = load_image('./image/Boxing_Rings.png')
