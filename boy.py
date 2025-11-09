@@ -171,7 +171,7 @@ class Boy:
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
-        self.image = load_image('animation_sheet.png')
+        self.image = load_image('./image/Little_Mac.png')
 
         self.IDLE = Idle(self)
         self.SLEEP = Sleep(self)
