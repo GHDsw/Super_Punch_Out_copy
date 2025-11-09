@@ -1,6 +1,7 @@
 from pico2d import load_image, get_time
 from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT
 import math
+import time
 
 import game_world
 from ball import Ball, BigBall
@@ -29,7 +30,8 @@ def left_up(e):
 
 #x1, y1, x2, y2
 sprite_size = {'IDle':[[154,395], [225,538]],
-               'Move':[[186,250],[249,385]],
+               'Move1':[[186,250],[249,385]],
+               'Move2':[[251,250],[322,385]],
                'blank':[[0,0],[0,0]]}
 
 
@@ -89,6 +91,8 @@ class Idle:
 class Move:
     def __init__(self, boy):
         self.boy = boy
+        self.boy.x = 400
+        self.boy.y = 90
 
     def enter(self, e):
         if right_down(e) or left_up(e):
@@ -102,8 +106,11 @@ class Move:
 
     def do(self):
         #self.boy.frame = (self.boy.frame + 1) % 8
-        self.boy.x = 400 + self.boy.dir * 50
-        if get_time() - self.boy.wait_time > 1:
+        if (self.boy.x < 400 + self.boy.dir * 100 and self.boy.dir == 1) or (self.boy.dir == -1 and self.boy.x > 400 + self.boy.dir * 100):
+            self.boy.x += self.boy.dir * 5
+
+
+        if get_time() - self.boy.wait_time > 10:
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
 
     def draw(self):
@@ -111,8 +118,12 @@ class Move:
         #     self.boy.image.clip_draw(self.boy.frame * 100, 100, 100, 100, self.boy.x, self.boy.y)
         # else: # face_dir == -1: # left
         #     self.boy.image.clip_draw(self.boy.frame * 100, 0, 100, 100, self.boy.x, self.boy.y)
-        sx, sy = sprite_size['Move'][0]  # 좌상 (x1, y1)
-        ex, ey = sprite_size['Move'][1]  # 우하 (x2, y2)
+        if self.boy.x < 380 or self.boy.x > 420:
+            sx, sy = sprite_size['Move2'][0]  # 좌상 (x1, y1)
+            ex, ey = sprite_size['Move2'][1]  # 우하 (x2, y2)
+        else:
+            sx, sy = sprite_size['Move1'][0]  # 좌상 (x1, y1)
+            ex, ey = sprite_size['Move1'][1]  # 우하 (x2, y2)
 
         img_h = self.boy.image.h  # 이미지 전체 높이
         clip_x = sx
@@ -127,10 +138,6 @@ class Move:
                                                0, 'h', self.boy.x, self.boy.y, clip_w,clip_h)
         elif self.boy.dir == -1:
             self.boy.image.clip_draw(clip_x, clip_y, clip_w, clip_h, self.boy.x, self.boy.y)
-
-
-
-
 
 
 class Boy:
