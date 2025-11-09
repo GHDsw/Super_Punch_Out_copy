@@ -3,11 +3,16 @@ from pico2d import *
 
 import title_mode
 
-sprite_size = {'intro': [[0, 0], [0, 0]],
+sprite_size = {'intro': [[20, 356], [275, 579]],
                }
+
+TIME_PER_ACTION = 10
+ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
+FRAMES_PER_ACTION = 22
 
 image = None
 intro_start_time = 0.0
+frame = 0
 
 def pause():
     pass
@@ -18,8 +23,10 @@ def resume():
 def init():
     global image, intro_start_time
 
-    image = load_image('./image/Intro, Ending, Menus, Fonts.png')
+    image = load_image('./image/Intro,Menu.png')
     intro_start_time = get_time()
+
+
 
 def finish():
     global image
@@ -28,12 +35,30 @@ def finish():
 def update():
     #로고 모드 2초간 지속
     global intro_start_time
-    if get_time() - intro_start_time > 2.0:
+    if get_time() - intro_start_time > 30.0:
         game_framework.change_mode(title_mode)
+
+    global frame
+    frame = (frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%22
 
 def draw():
     clear_canvas()
-    image.draw(400, 300)
+    sx, sy = sprite_size['intro'][0]
+    ex, ey = sprite_size['intro'][1]
+
+    img_h = image.h  # 이미지 전체 높이
+    gap = 20  # 프레임 간격
+    clip_x = sx
+    clip_y = img_h - ey - 1  # top-based y -> bottom-based y 변환
+    clip_w = ex - sx + 1
+    clip_h = ey - sy + 1
+    # 22프레임, 한줄에 8프레임씩
+    # 20,356 , 257,579 -> 296,356 , 551,579
+    # 각 프레임은 20*20 차이
+    #image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
+    image.clip_draw(clip_w*(int(frame)%8)+gap*(int(frame)%8+1),
+                    clip_y-(clip_h*(int(frame)//8)+gap*(int(frame)//8)),
+                    clip_w, clip_h, 400, 300)
     update_canvas()
 
 def handle_events():
