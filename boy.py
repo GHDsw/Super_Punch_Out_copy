@@ -61,51 +61,61 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 8
 
 # x1, y1, x2, y2
-sprite_size = {'IDle': [[154, 395], [225, 538]],
-               # 무브 원투 바뀜 펼쳐지며 회피가 아니라 돌아오며 접히는거였음
-               # 어쩐지 각도 작은게 오른쪽에 있더라 젠장
-               'Move1': [[186, 250], [249, 385]], 'Move2': [[251, 250], [322, 385]],
-               'HeadAttackReady': [[186, 250], [249, 385]], 'HeadAttackL': [[251, 250], [322, 385]],
-               'HeadAttackR': [[186, 250], [249, 385]],
-               'BodyAttackReady': [[186, 250], [249, 385]], 'BodyAttack': [[251, 250], [322, 385]],
+sprite_size = {
+    'IDle': [[154, 395], [225, 538]], 'guard': [[8, 145], [71, 248]], 'backstep': [[130, 145], [209, 248]],
+    # 무브 원투 바뀜 펼쳐지며 회피가 아니라 돌아오며 접히는거였음
+    # 어쩐지 각도 작은게 오른쪽에 있더라 젠장
+    'Move1': [[251, 250], [322, 385]], 'Move2': [[186, 250], [249, 385]],
+    'HeadAttackReady': [[186, 250], [249, 385]], 'HeadAttackL': [[251, 250], [322, 385]], 'HeadAttackR': [[186, 250], [249, 385]],
+    'BodyAttackReady': [[186, 250], [249, 385]], 'BodyAttack': [[251, 250], [322, 385]],
 
-               'blank': [[8, 8], [111, 143]], 'blank': [[113, 8], [200, 143]], 'blank': [[202, 8], [305, 143]],
-               'blank': [[307, 8], [394, 143]],
+    'blank': [[8, 8], [111, 143]], 'blank': [[113, 8], [200, 143]], 'blank': [[202, 8], [305, 143]], 'blank': [[307, 8], [394, 143]],
 
-               'blank': [[8, 145], [71, 248]], 'blank': [[73, 145], [128, 248]], 'blank': [[130, 145], [209, 248]],
-               'blank': [[211, 145], [322, 248]], 'blank': [[324, 145], [395, 248]],
-               'blank': [[397, 145], [460, 248]], 'blank': [[462, 145], [549, 248]], 'blank': [[551, 145], [622, 248]],
-               'blank': [[624, 145], [711, 248]],
+    'blank': [[8, 145], [71, 248]], 'blank': [[73, 145], [128, 248]], 'blank': [[130, 145], [209, 248]], 'blank': [[211, 145], [322, 248]], 'blank': [[324, 145], [395, 248]],
+    'blank': [[397, 145], [460, 248]], 'blank': [[462, 145], [549, 248]], 'blank': [[551, 145], [622, 248]], 'blank': [[624, 145], [711, 248]],
 
-               'blank': [[8, 250], [95, 385]], 'blank': [[97, 250], [184, 385]], 'blank': [[186, 250], [249, 385]],
-               'blank': [[251, 250], [322, 385]], 'blank': [[324, 250], [403, 385]],
-               'blank': [[405, 250], [468, 385]], 'blank': [[470, 250], [533, 385]], 'blank': [[535, 250], [590, 385]],
-               'blank': [[592, 250], [679, 385]], 'blank': [[681, 250], [784, 385]],
+    'blank': [[8, 250], [95, 385]], 'blank': [[97, 250], [184, 385]], 'blank': [[186, 250], [249, 385]], 'blank': [[251, 250], [322, 385]], 'blank': [[324, 250], [403, 385]],
+    'blank': [[405, 250], [468, 385]], 'blank': [[470, 250], [533, 385]], 'blank': [[535, 250], [590, 385]], 'blank': [[592, 250], [679, 385]], 'blank': [[681, 250], [784, 385]],
 
-               'blank': [[8, 387], [79, 538]], 'blank': [[81, 387], [152, 538]], 'blank': [[154, 387], [225, 538]],
-               'blank': [[227, 387], [314, 538]], 'blank': [[316, 387], [379, 538]],
-               'blank': [[381, 387], [460, 538]], 'blank': [[462, 387], [541, 538]],
+    'blank': [[8, 387], [79, 538]], 'blank': [[81, 387], [152, 538]], 'blank': [[154, 387], [225, 538]],'blank': [[227, 387], [314, 538]], 'blank': [[316, 387], [379, 538]],
+    'blank': [[381, 387], [460, 538]], 'blank': [[462, 387], [541, 538]],
 
-               'blank': [[8, 540], [87, 667]], 'blank': [[89, 540], [168, 667]], 'blank': [[170, 540], [281, 667]],
-               'blank': [[283, 540], [354, 667]],
+    'blank': [[8, 540], [87, 667]], 'blank': [[89, 540], [168, 667]], 'blank': [[170, 540], [281, 667]],'blank': [[283, 540], [354, 667]],
 
-               }
-
+    }
 
 
 class Idle:
 
     def __init__(self, boy):
         self.boy = boy
+        self.sx, self.sy = 0, 0
+
+        self.img_h = self.boy.image.h  # 이미지 전체 높이
+        self.clip_x = 0
+        self.clip_y = 0
+        self.clip_w = 0
+        self.clip_h = 0
 
     def enter(self, e):
+        self.boy.x = 800
         self.boy.wait_time = get_time()
         if up_down(e):
             self.boy.face_dir = 1
+            sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
+            ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
         elif down_down(e):
             self.boy.face_dir = -1
+            sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
+            ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
         else:
             self.boy.dir = 0
+            sx, sy = sprite_size['IDle'][0]  # 좌상 (x1, y1)
+            ex, ey = sprite_size['IDle'][1]  # 우하 (x2, y2)
+        self.clip_x = sx
+        self.clip_y = self.img_h - ey - 1  # top-based y -> bottom-based y 변환
+        self.clip_w = ex - sx + 1
+        self.clip_h = ey - sy + 1
 
 
     def exit(self, e):
@@ -121,11 +131,13 @@ class Idle:
 
     def draw(self):
         if self.boy.face_dir == 1: # up
-            self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
+            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
         elif self.boy.face_dir == -1: # down
-            self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
+            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
         else: #진짜 idle
-            self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
 
 
 class Move:
@@ -145,7 +157,8 @@ class Move:
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        if self.boy.x < 900 and self.boy.x > 700:
+            self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
 
     def draw(self):
         if self.boy.dir == 1: # right
@@ -193,9 +206,9 @@ class Boy:
 
         self.font = load_font('ENCR10B.TTF', 16)
 
-        self.x, self.y = 0, 90
+        self.x, self.y = 800, 300
         self.frame = 0
-        self.face_dir = 1
+        self.face_dir = 0
         self.dir = 0
         self.image = load_image('./image/Little_Mac.png')
 
@@ -205,14 +218,13 @@ class Boy:
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {up_down: self.IDLE, down_down: self.IDLE,
+                self.IDLE : {up_down: self.IDLE, up_up:self.IDLE , down_down: self.IDLE, down_up:self.IDLE,
                              z_down: self.ATTACK, x_down: self.ATTACK,
                     right_down: self.MOVE, left_down: self.MOVE},
                 self.MOVE : {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE
                              }
             }
         )
-
 
 
     def update(self):
