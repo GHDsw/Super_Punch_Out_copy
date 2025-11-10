@@ -6,8 +6,7 @@ import game_world
 
 from boy import Boy
 from rings import Rings
-from ball import Ball
-from zombie import Zombie
+
 
 boy = None
 
