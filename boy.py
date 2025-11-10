@@ -1,5 +1,6 @@
 from pico2d import load_image, get_time, load_font, draw_rectangle
 from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_UP, SDLK_DOWN, SDLK_z, SDLK_x
+import math
 
 import game_world
 import game_framework
@@ -13,17 +14,16 @@ def space_down(e): # e is space down ?
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 
+Return = lambda e: e[0] == 'RETURN'
+
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
-
 
 def right_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
 
-
 def left_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
-
 
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
@@ -49,11 +49,11 @@ def x_down(e):
 # Boy의 Run Speed 계산
 
 # Boy Run Speed
-PIXEL_PER_METER = (10.0 / 0.3)  # 10 pixel 30 cm
-RUN_SPEED_KMPH = 20.0  # Km / Hour
-RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
-RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
-RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
+PIXEL_PER_METER = (100.0 / 0.1)  # 10 pixel 1 cm
+MOVE_SPEED_KMPH = 20.0  # Km / Hour
+MOVE_SPEED_MPM = (MOVE_SPEED_KMPH * 1000.0 / 60.0)
+MOVE_SPEED_MPS = (MOVE_SPEED_MPM / 60.0)
+MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 
 # Boy Action Speed
 TIME_PER_ACTION = 0.5
@@ -92,7 +92,7 @@ class Idle:
 
 
     def enter(self, e):
-        self.boy.x = 800
+        self.boy.x, self.boy.y = 800, 300
         self.boy.wait_time = get_time()
         if up_down(e):
             self.boy.face_dir = 1
@@ -137,12 +137,17 @@ class Idle:
 class Move:
     def __init__(self, boy):
         self.boy = boy
+        self.Return = 0
+        self.t = 0.0
+        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
 
     def enter(self, e):
         if right_down(e) or left_up(e):
             self.boy.dir = 1
         elif left_down(e) or right_up(e):
             self.boy.dir = -1
+        if left_up(e) or right_up(e):
+            self.Return = 1
 
     def exit(self, e):
         # if space_down(e):
@@ -151,23 +156,51 @@ class Move:
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        if self.boy.x < 900 and self.boy.x > 700:
-            self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+
         if self.boy.x <850 and self.boy.x > 750:
             sx, sy = sprite_size['Move2'][0]
             ex, ey = sprite_size['Move2'][1]
         else:
             sx, sy = sprite_size['Move1'][0]
             ex, ey = sprite_size['Move1'][1]
+        #다시 짜 시발
+        if self.Return == 1 and self.boy.x != 800:
+            if self.t < 1.0:
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.boy.x = (1.0 - self.t) * (800 + self.boy.dir * -100) + self.t * 800
+                self.boy.y = (1.0 - self.t) * 250 + self.t * 300
+            else:
+                self.boy.x, self.boy.y = 800, 300
+                self.Return = -1
+
+        elif self.boy.x < 900 and self.boy.x > 700 and self.Return == 0:
+            if self.t < 1.0:
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.boy.x = (1.0 - self.t) * 800 + self.t * (800+self.boy.dir*100)
+                self.boy.y = (1.0 - self.t) * 300 + self.t * 250
+            else:
+                self.boy.x, self.boy.y = 800+self.boy.dir*100, 250
+                self.Return = 1
+
+        if self.t > 1.0:
+            self.t = 0.0
+
         self.boy.clip_x = sx
         self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
         self.boy.clip_w = ex - sx + 1
         self.boy.clip_h = ey - sy + 1
 
+        if self.Return == -1:
+            self.boy.state_machine.handle_state_event(('RETURN', None))
+
     def draw(self):
         if self.boy.dir == 1: # right
+            if self.Return:
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,
+                                         self.boy.y)
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+            else:
+                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                0 ,'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
         else: # face_dir == -1: # left
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
@@ -192,7 +225,7 @@ class Attack:
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        self.boy.x += self.boy.dir * MOVE_SPEED_PPS * game_framework.frame_time
 
     def draw(self):
         if self.boy.dir == 1: # right
@@ -237,7 +270,9 @@ class Boy:
                 self.IDLE : {up_down: self.IDLE, up_up:self.IDLE , down_down: self.IDLE, down_up:self.IDLE,
                              z_down: self.ATTACK, x_down: self.ATTACK,
                     right_down: self.MOVE, left_down: self.MOVE},
-                self.MOVE : {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE
+                self.MOVE : {right_up: self.MOVE, left_up: self.MOVE,
+                             right_down: self.MOVE, left_down: self.MOVE,
+                             Return: self.IDLE
                              }
             }
         )
