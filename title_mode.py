@@ -9,7 +9,7 @@ sprite_size = {'ring': [[1124, 66], [1379, 289]],
 
 TIME_PER_ACTION = 1
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION_ring = 4
+FRAMES_PER_ACTION_ring = 8
 FRAMES_PER_ACTION_logo = 3
 
 image = None
@@ -63,7 +63,7 @@ def draw():
     # image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
     image.clip_draw(clip_x + clip_w * (int(frame_ring) % 4) + gap * (int(frame_ring) % 4),
                     clip_y,
-                    clip_w, clip_h, 400, 300)
+                    clip_w, clip_h, 400, 300, clip_w*2, clip_h*2)
     #frame_logo 부분
     sxL, syL = sprite_size['title'][0]
     exL, eyL = sprite_size['title'][1]
