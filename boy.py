@@ -88,6 +88,9 @@ class Idle:
 
     def __init__(self, boy):
         self.boy = boy
+        self.t = 0.0
+        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
+        self.move = False
 
     def enter(self, e):
         self.boy.x, self.boy.y = 400, 300
@@ -101,10 +104,12 @@ class Idle:
             self.boy.face_dir = 1
             sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
+            self.move = True
         elif down_down(e):
             self.boy.face_dir = -1
             sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
+            self.move = True
 
         self.boy.clip_x = sx
         self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
@@ -123,6 +128,15 @@ class Idle:
         if get_time() - self.boy.wait_time > 1:
             self.boy.dir=0
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+
+        if self.t < 1.0 and self.move:
+            self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+            self.boy.y = (1.0 - self.t) * (300 + self.boy.face_dir * 50) + self.t * 300
+            # self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
+        else:
+            self.boy.x, self.boy.y = 400, 300
+            self.t = 0.0
+            self.move = False
 
     def draw(self):
         if self.boy.face_dir == 1: # up
