@@ -89,13 +89,7 @@ class Idle:
 
     def __init__(self, boy):
         self.boy = boy
-        self.sx, self.sy = 0, 0
 
-        self.img_h = self.boy.image.h  # 이미지 전체 높이
-        self.clip_x = 0
-        self.clip_y = 0
-        self.clip_w = 0
-        self.clip_h = 0
 
     def enter(self, e):
         self.boy.x = 800
@@ -110,12 +104,12 @@ class Idle:
             ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
         else:
             self.boy.dir = 0
-            sx, sy = sprite_size['IDle'][0]  # 좌상 (x1, y1)
-            ex, ey = sprite_size['IDle'][1]  # 우하 (x2, y2)
-        self.clip_x = sx
-        self.clip_y = self.img_h - ey - 1  # top-based y -> bottom-based y 변환
-        self.clip_w = ex - sx + 1
-        self.clip_h = ey - sy + 1
+            sx, sy = sprite_size['IDle'][0]
+            ex, ey = sprite_size['IDle'][1]
+        self.boy.clip_x = sx
+        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
+        self.boy.clip_w = ex - sx + 1
+        self.boy.clip_h = ey - sy + 1
 
 
     def exit(self, e):
@@ -132,12 +126,12 @@ class Idle:
     def draw(self):
         if self.boy.face_dir == 1: # up
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
         elif self.boy.face_dir == -1: # down
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
         else: #진짜 idle
-            self.boy.image.clip_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
 
 
 class Move:
@@ -159,12 +153,22 @@ class Move:
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         if self.boy.x < 900 and self.boy.x > 700:
             self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        sx, sy = sprite_size['Move1'][0]
+        ex, ey = sprite_size['Move1'][1]
+        self.boy.clip_x = sx
+        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
+        self.boy.clip_w = ex - sx + 1
+        self.boy.clip_h = ey - sy + 1
 
     def draw(self):
         if self.boy.dir == 1: # right
-            self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
+            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
+            self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                               0 ,'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
         else: # face_dir == -1: # left
-            self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
+            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,
+                                     self.boy.y)
 
 class Attack:
     def __init__(self, boy):
@@ -211,6 +215,14 @@ class Boy:
         self.face_dir = 0
         self.dir = 0
         self.image = load_image('./image/Little_Mac.png')
+
+        self.sx, self.sy = 0, 0
+
+        self.img_h = self.image.h  # 이미지 전체 높이
+        self.clip_x = 0
+        self.clip_y = 0
+        self.clip_w = 0
+        self.clip_h = 0
 
         self.IDLE = Idle(self)
         self.MOVE = Move(self)
