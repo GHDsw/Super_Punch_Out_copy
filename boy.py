@@ -92,7 +92,7 @@ class Idle:
 
 
     def enter(self, e):
-        self.boy.x, self.boy.y = 800, 300
+        self.boy.x, self.boy.y = 400, 300
         self.boy.wait_time = get_time()
         if up_down(e):
             self.boy.face_dir = 1
@@ -167,22 +167,22 @@ class Move:
         if self.Return:
             if self.t < 1.0:
                 self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-                self.boy.x = (1.0 - self.t) * (800+self.boy.dir*100) + self.t * 800
+                self.boy.x = (1.0 - self.t) * (400+self.boy.dir*100) + self.t * 400
                 self.boy.y = (1.0 - self.t) * 250 + self.t * 300
                 #self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
             else:
-                self.boy.x, self.boy.y = 800, 300
+                self.boy.x, self.boy.y = 400, 300
                 self.t = 0.0
                 self.Return = False
         else:
-            self.boy.x, self.boy.y = 800+self.boy.dir*100, 250
+            self.boy.x, self.boy.y = 400+self.boy.dir*100, 250
 
         self.boy.clip_x = sx
         self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
         self.boy.clip_w = ex - sx + 1
         self.boy.clip_h = ey - sy + 1
 
-        if self.boy.x == 800:
+        if self.boy.x == 400:
             self.boy.state_machine.handle_state_event(('RETURN', None))
 
     def draw(self):
@@ -235,7 +235,7 @@ class Boy:
 
         self.font = load_font('ENCR10B.TTF', 16)
 
-        self.x, self.y = 800, 300
+        self.x, self.y = 400, 300
         self.frame = 0
         self.face_dir = 0
         self.dir = 0
