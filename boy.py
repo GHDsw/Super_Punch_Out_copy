@@ -153,8 +153,12 @@ class Move:
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         if self.boy.x < 900 and self.boy.x > 700:
             self.boy.x += self.boy.dir * RUN_SPEED_PPS * game_framework.frame_time
-        sx, sy = sprite_size['Move1'][0]
-        ex, ey = sprite_size['Move1'][1]
+        if self.boy.x <850 and self.boy.x > 750:
+            sx, sy = sprite_size['Move2'][0]
+            ex, ey = sprite_size['Move2'][1]
+        else:
+            sx, sy = sprite_size['Move1'][0]
+            ex, ey = sprite_size['Move1'][1]
         self.boy.clip_x = sx
         self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
         self.boy.clip_w = ex - sx + 1
