@@ -168,7 +168,8 @@ class Move:
             if self.t < 1.0:
                 self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
                 self.boy.x = (1.0 - self.t) * (800+self.boy.dir*100) + self.t * 800
-                self.boy.y = (1.0 - self.t) * self.t * 250 + 300
+                self.boy.y = (1.0 - self.t) * 250 + self.t * 300
+                #self.boy.y = (1.0 - self.t) * self.t * 250 +  300 #이렇게 작성하면 통통 튐
             else:
                 self.boy.x, self.boy.y = 800, 300
                 self.t = 0.0
