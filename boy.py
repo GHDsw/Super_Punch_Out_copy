@@ -5,7 +5,6 @@ import math
 import game_world
 import game_framework
 
-from ball import Ball
 from state_machine import StateMachine
 
 
@@ -58,7 +57,7 @@ MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 # Boy Action Speed
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 8
+FRAMES_PER_ACTION = 2
 
 # x1, y1, x2, y2
 sprite_size = {
@@ -66,21 +65,21 @@ sprite_size = {
     # 무브 원투 바뀜 펼쳐지며 회피가 아니라 돌아오며 접히는거였음
     # 어쩐지 각도 작은게 오른쪽에 있더라 젠장
     'Move1': [[251, 250], [322, 385]], 'Move2': [[186, 250], [249, 385]],
-    'HeadAttackReady': [[186, 250], [249, 385]], 'HeadAttackL': [[251, 250], [322, 385]], 'HeadAttackR': [[186, 250], [249, 385]],
-    'BodyAttackReady': [[186, 250], [249, 385]], 'BodyAttack': [[251, 250], [322, 385]],
+    'HeadAttackReady': [[324, 250], [403, 385]], 'HeadAttack': [[405, 250], [468, 385]],
+    'BodyAttackReady': [[462, 145], [549, 248]], 'BodyAttack': [[551, 145], [622, 248]],
 
-    'blank': [[8, 8], [111, 143]], 'blank': [[113, 8], [200, 143]], 'blank': [[202, 8], [305, 143]], 'blank': [[307, 8], [394, 143]],
+    '1': [[8, 8], [111, 143]], '2': [[113, 8], [200, 143]], '3': [[202, 8], [305, 143]], '4': [[307, 8], [394, 143]],
 
-    'blank': [[8, 145], [71, 248]], 'blank': [[73, 145], [128, 248]], 'blank': [[130, 145], [209, 248]], 'blank': [[211, 145], [322, 248]], 'blank': [[324, 145], [395, 248]],
-    'blank': [[397, 145], [460, 248]], 'blank': [[462, 145], [549, 248]], 'blank': [[551, 145], [622, 248]], 'blank': [[624, 145], [711, 248]],
+    '1': [[8, 145], [71, 248]], '2': [[73, 145], [128, 248]], '3': [[130, 145], [209, 248]], '4': [[211, 145], [322, 248]], '5': [[324, 145], [395, 248]],
+    '6': [[397, 145], [460, 248]], '7': [[462, 145], [549, 248]], '8': [[551, 145], [622, 248]], '9': [[624, 145], [711, 248]],
 
-    'blank': [[8, 250], [95, 385]], 'blank': [[97, 250], [184, 385]], 'blank': [[186, 250], [249, 385]], 'blank': [[251, 250], [322, 385]], 'blank': [[324, 250], [403, 385]],
-    'blank': [[405, 250], [468, 385]], 'blank': [[470, 250], [533, 385]], 'blank': [[535, 250], [590, 385]], 'blank': [[592, 250], [679, 385]], 'blank': [[681, 250], [784, 385]],
+    '1': [[8, 250], [95, 385]], '2': [[97, 250], [184, 385]], '3': [[186, 250], [249, 385]], '4': [[251, 250], [322, 385]], '5': [[324, 250], [403, 385]],
+    '6': [[405, 250], [468, 385]], '7': [[470, 250], [533, 385]], '8': [[535, 250], [590, 385]], '9': [[592, 250], [679, 385]], '10': [[681, 250], [784, 385]],
 
-    'blank': [[8, 387], [79, 538]], 'blank': [[81, 387], [152, 538]], 'blank': [[154, 387], [225, 538]],'blank': [[227, 387], [314, 538]], 'blank': [[316, 387], [379, 538]],
-    'blank': [[381, 387], [460, 538]], 'blank': [[462, 387], [541, 538]],
+    '1': [[8, 387], [79, 538]], '2': [[81, 387], [152, 538]], '3': [[154, 387], [225, 538]],'4': [[227, 387], [314, 538]], '5': [[316, 387], [379, 538]],
+    '6': [[381, 387], [460, 538]], '7': [[462, 387], [541, 538]],
 
-    'blank': [[8, 540], [87, 667]], 'blank': [[89, 540], [168, 667]], 'blank': [[170, 540], [281, 667]],'blank': [[283, 540], [354, 667]],
+    '1': [[8, 540], [87, 667]], '2': [[89, 540], [168, 667]], '3': [[170, 540], [281, 667]],'4': [[283, 540], [354, 667]],
 
     }
 
@@ -90,10 +89,14 @@ class Idle:
     def __init__(self, boy):
         self.boy = boy
 
-
     def enter(self, e):
         self.boy.x, self.boy.y = 400, 300
         self.boy.wait_time = get_time()
+
+        self.boy.dir = 0
+        sx, sy = sprite_size['IDle'][0]
+        ex, ey = sprite_size['IDle'][1]
+
         if up_down(e):
             self.boy.face_dir = 1
             sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
@@ -102,10 +105,7 @@ class Idle:
             self.boy.face_dir = -1
             sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
-        else:
-            self.boy.dir = 0
-            sx, sy = sprite_size['IDle'][0]
-            ex, ey = sprite_size['IDle'][1]
+
         self.boy.clip_x = sx
         self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
         self.boy.clip_w = ex - sx + 1
@@ -119,8 +119,9 @@ class Idle:
 
 
     def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        if get_time() - self.boy.wait_time > 3:
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
+        if get_time() - self.boy.wait_time > 1:
+            self.boy.dir=0
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
 
     def draw(self):
@@ -132,6 +133,68 @@ class Idle:
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
         else: #진짜 idle
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+
+
+class Attack:
+    def __init__(self, boy):
+        self.boy = boy
+
+    def enter(self, e):
+        self.boy.wait_time = get_time()
+        if z_down(e):
+            self.boy.dir = -1
+        if x_down(e):
+            self.boy.dir = 1
+        else:
+            pass
+    def exit(self, e):
+        # if space_down(e):
+        #     self.boy.fire_ball()
+        pass
+
+    def do(self):
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%1
+
+        if get_time() - self.boy.wait_time > 1:
+            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+            self.boy.dir=0
+
+        if self.boy.face_dir == 1:
+            if self.boy.frame == 1:
+                sx, sy = sprite_size['HeadAttackReady'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['HeadAttackReady'][1]  # 우하 (x2, y2)
+            else:
+                sx, sy = sprite_size['HeadAttack'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['HeadAttack'][1]  # 우하 (x2, y2)
+        else:
+            if self.boy.frame == 1:
+                sx, sy = sprite_size['BodyAttackReady'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['BodyAttackReady'][1]  # 우하 (x2, y2)
+            else:
+                sx, sy = sprite_size['BodyAttack'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['BodyAttack'][1]  # 우하 (x2, y2)
+        self.boy.clip_x = sx
+        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
+        self.boy.clip_w = ex - sx + 1
+        self.boy.clip_h = ey - sy + 1
+
+    def draw(self):
+        if self.boy.face_dir == 1: # up
+            #오른손 펀치를 날리면 왼손 펀치를 한번 더 날리는 모션이 나옴
+            #왜인지는 모르겠음
+            #아마 timeout 떄문에 dir이 0으로 바뀌면서 다시 그려지는거 같음
+            # 시발 %1로 바꿔도 나오네 뭐가 문제야
+            if self.boy.dir == 1: #right
+                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
+            else: #left
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+        elif self.boy.face_dir == -1: # down
+            if self.boy.dir == 1:
+                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
+            else:  # left
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,self.boy.y)
 
 
 class Move:
@@ -195,38 +258,6 @@ class Move:
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,
                                      self.boy.y)
 
-class Attack:
-    def __init__(self, boy):
-        self.boy = boy
-
-    def enter(self, e):
-        if x_down(e):
-            self.boy.dir = 1
-        elif z_down(e):
-            self.boy.dir = -1
-        pass
-
-    def exit(self, e):
-        # if space_down(e):
-        #     self.boy.fire_ball()
-        pass
-
-    def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        self.boy.x += self.boy.dir * MOVE_SPEED_PPS * game_framework.frame_time
-
-    def draw(self):
-        if self.boy.dir == 1: # right
-            if self.boy.face_dir == 1: #upper
-                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
-            else: #0,-1 body attack
-                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
-        else: # face_dir == -1: # left
-            if self.boy.face_dir == 1:
-                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
-            if self.boy.face_dir == -1:
-                self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
-
 
 class Boy:
     def __init__(self):
@@ -237,7 +268,7 @@ class Boy:
 
         self.x, self.y = 400, 300
         self.frame = 0
-        self.face_dir = 0
+        self.face_dir = -1
         self.dir = 0
         self.image = load_image('./image/Little_Mac.png')
 
@@ -257,11 +288,13 @@ class Boy:
             {
                 self.IDLE : {up_down: self.IDLE, up_up:self.IDLE , down_down: self.IDLE, down_up:self.IDLE,
                              z_down: self.ATTACK, x_down: self.ATTACK,
-                    right_down: self.MOVE, left_down: self.MOVE},
+                             time_out: self.IDLE,
+                             right_down: self.MOVE, left_down: self.MOVE},
                 self.MOVE : {right_up: self.MOVE, left_up: self.MOVE,
                              right_down: self.MOVE, left_down: self.MOVE,
                              Return: self.IDLE
-                             }
+                             },
+                self.ATTACK : {time_out: self.IDLE}
             }
         )
 
