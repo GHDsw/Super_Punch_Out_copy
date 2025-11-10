@@ -45,6 +45,9 @@ def update():
 
     frame = (frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 22
 
+    if frame >= 21:
+        game_framework.change_mode(title_mode)
+
 def draw():
     clear_canvas()
     sx, sy = sprite_size['intro'][0]
