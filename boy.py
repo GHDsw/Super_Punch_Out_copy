@@ -110,7 +110,7 @@ class Idle:
             sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
             self.boy.x, self.boy.y = 400, 300 + self.boy.face_dir * 50
-        if up_up(e) or down_up(e):
+        elif up_up(e) or down_up(e):
             self.move = True
 
         self.boy.clip_x = sx
@@ -163,8 +163,7 @@ class Attack:
             self.boy.dir = -1
         if x_down(e):
             self.boy.dir = 1
-        else:
-            pass
+
     def exit(self, e):
         # if space_down(e):
         #     self.boy.fire_ball()
@@ -172,13 +171,6 @@ class Attack:
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
-
-        if get_time() - self.boy.wait_time > 1:
-            self.boy.dir = 0
-            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
-            print(f'timeout')
-            print(f'{self.boy.dir}')
-
 
         if self.boy.face_dir == 1:
             if self.boy.frame == 1:
@@ -199,27 +191,26 @@ class Attack:
         self.boy.clip_w = ex - sx + 1
         self.boy.clip_h = ey - sy + 1
 
+        #타임아웃 넘기는거 위치 바꿨더니 해결됨 ㅋㅋ
+        if get_time() - self.boy.wait_time > 0.5:
+            self.boy.dir = 0
+            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+
     def draw(self):
         if self.boy.face_dir == 1: # up
             #오른손 펀치를 날리면 왼손 펀치를 한번 더 날리는 모션이 나옴
-            #왜인지는 모르겠음
+            #timeout으로 idel 넘어갈때 이미지 위치가 왼손 펀치로 설정되나본데
+            #해결 방법이 대체 뭐임 아오
             if self.boy.dir == 1: #right
-                print(f'rightpunch')
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
             elif self.boy.dir == -1: #left
-                print(f'leftpunch')
-                print(f'{self.boy.dir}')
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
         elif self.boy.face_dir == -1: # down
             if self.boy.dir == 1:
-                print(f'rightpunch')
-                print(f'{self.boy.dir}')
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
             elif self.boy.dir == -1:  # left
-                print(f'leftpunch')
-                print(f'{self.boy.dir}')
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,self.boy.y)
 
 
