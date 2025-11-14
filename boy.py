@@ -104,11 +104,13 @@ class Idle:
             self.boy.face_dir = 1
             sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
-            self.move = True
+            self.boy.x, self.boy.y = 400, 300 + self.boy.face_dir * 50
         elif down_down(e):
             self.boy.face_dir = -1
             sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
             ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
+            self.boy.x, self.boy.y = 400, 300 + self.boy.face_dir * 50
+        if up_up(e) or down_up(e):
             self.move = True
 
         self.boy.clip_x = sx
@@ -125,18 +127,20 @@ class Idle:
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
-        if get_time() - self.boy.wait_time > 1:
-            self.boy.dir=0
-            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+        # if get_time() - self.boy.wait_time > 1:
+        #     self.boy.dir=0
+        #     self.boy.state_machine.handle_state_event(('TIMEOUT', None))
 
-        if self.t < 1.0 and self.move:
-            self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-            self.boy.y = (1.0 - self.t) * (300 + self.boy.face_dir * 50) + self.t * 300
-            # self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
-        else:
-            self.boy.x, self.boy.y = 400, 300
-            self.t = 0.0
-            self.move = False
+        if self.move:
+            if self.t < 1.0:
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.boy.y = (1.0 - self.t) * (300 + self.boy.face_dir * 50) + self.t * 300
+                # self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
+            elif self.t >= 1.0:
+                self.boy.x, self.boy.y = 400, 300
+                self.t = 0.0
+                self.move = False
+
 
     def draw(self):
         if self.boy.face_dir == 1: # up
@@ -167,11 +171,14 @@ class Attack:
         pass
 
     def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%1
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
 
         if get_time() - self.boy.wait_time > 1:
+            self.boy.dir = 0
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
-            self.boy.dir=0
+            print(f'timeout')
+            print(f'{self.boy.dir}')
+
 
         if self.boy.face_dir == 1:
             if self.boy.frame == 1:
@@ -196,18 +203,23 @@ class Attack:
         if self.boy.face_dir == 1: # up
             #오른손 펀치를 날리면 왼손 펀치를 한번 더 날리는 모션이 나옴
             #왜인지는 모르겠음
-            #아마 timeout 떄문에 dir이 0으로 바뀌면서 다시 그려지는거 같음
-            # 시발 %1로 바꿔도 나오네 뭐가 문제야
             if self.boy.dir == 1: #right
+                print(f'rightpunch')
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
-            else: #left
+            elif self.boy.dir == -1: #left
+                print(f'leftpunch')
+                print(f'{self.boy.dir}')
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
         elif self.boy.face_dir == -1: # down
             if self.boy.dir == 1:
+                print(f'rightpunch')
+                print(f'{self.boy.dir}')
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
-            else:  # left
+            elif self.boy.dir == -1:  # left
+                print(f'leftpunch')
+                print(f'{self.boy.dir}')
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,self.boy.y)
 
 
