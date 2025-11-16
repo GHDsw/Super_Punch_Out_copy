@@ -337,7 +337,9 @@ class Boy:
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현
         return self.x - 20, self.y - 50, self.x + 20, self.y + 40
 
-    # def handle_collision(self, group, other):
+    def handle_collision(self, group, other):
+        if group == 'boy:enemy':
+            pass
     #     if group == 'boy:ball':
     #         self.ball_count += 1
     #         # 충돌한 ball은 ball 자신이 제거하도록

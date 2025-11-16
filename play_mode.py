@@ -29,13 +29,15 @@ def init():
 
     rings = Rings()
     game_world.add_object(rings, 0)
-    game_world.add_collision_pair('grass:ball', rings, None)
+    #game_world.add_collision_pair('grass:ball', rings, None)
 
     boy = Boy()
     game_world.add_object(boy, 2)
 
     enemy = Enemy()
-    game_world.add_object(boy, 1)
+    game_world.add_object(enemy, 1)
+
+    game_world.add_collision_pair('boy:enemy', boy, None)
 
     # balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
     # game_world.add_objects(balls, 1)
