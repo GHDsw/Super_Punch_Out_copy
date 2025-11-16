@@ -7,6 +7,7 @@ from pico2d import *
 from state_machine import StateMachine
 
 time_out = lambda e: e[0] == 'TIMEOUT'
+event_end = lambda e: e[0] == 'EVENT_END'
 
 # zombie Run Speed
 PIXEL_PER_METER = (10.0 / 0.3)  # 10 pixel 30 cm
@@ -49,8 +50,8 @@ sprite_size = {
 }
 
 class IDLE:
-    def __init__(self):
-        pass
+    def __init__(self, enemy):
+        self.enemy = enemy
 
     def enter(self):
         pass
@@ -67,7 +68,7 @@ class IDLE:
 
 class MOVE:
     def __init__(self):
-        pass
+        self.enemy = enemy
 
     def enter(self):
         pass
@@ -83,8 +84,25 @@ class MOVE:
 
 
 class ATTACK:
-    def __init__(self):
+    def __init__(self, enemy):
+        self.enemy = enemy
+
+    def enter(self):
         pass
+
+    def exit(self):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        pass
+
+
+class HIT:
+    def __init__(self, enemy):
+        self.enemy = enemy
 
     def enter(self):
         pass
@@ -101,7 +119,11 @@ class ATTACK:
 
 class Enemy:
     def __init__(self):
+        self.HIT = None
+        self.ATTACK = None
+        self.MOVE = None
         self.IDLE = None
+
         self.x, self.y = 400, 500
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = random.randint(0, 9)
@@ -109,15 +131,18 @@ class Enemy:
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE: {up_down: self.IDLE, up_up: self.IDLE, down_down: self.IDLE, down_up: self.IDLE,
-                            z_down: self.ATTACK, x_down: self.ATTACK,
-                            time_out: self.IDLE,
-                            right_down: self.MOVE, left_down: self.MOVE},
-                self.MOVE: {right_up: self.MOVE, left_up: self.MOVE,
-                            right_down: self.MOVE, left_down: self.MOVE,
-                            Return: self.IDLE
+                self.IDLE: {
+                    time_out: self.IDLE,
                             },
-                self.ATTACK: {time_out: self.IDLE}
+                self.MOVE: {
+                    event_end: self.IDLE
+                            },
+                self.ATTACK: {
+                    event_end: self.IDLE
+                              },
+                self.HIT: {
+                    time_out: self.IDLE, event_end: self.IDLE
+                }
             }
         )
 
