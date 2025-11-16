@@ -9,6 +9,7 @@ import play_mode
 sprite_size = {'alphabet_table': [[1690, 2845], [1849, 2952]],
                'a': [[1690, 2845], [1996, 2856]],
                'arrow': [[1976, 2992], [1980, 3000]],
+               'background': [[1952, 844], [2207, 1067]],
                }
 
 # 글자 크기 / 간격 (요구사항)
@@ -73,6 +74,17 @@ def update():
 
 def draw():
     clear_canvas()
+    bsx, bsy = sprite_size['background'][0]
+    bex, bey = sprite_size['background'][1]
+    img_h = alp_image.h
+    b_clip_x = bsx
+    b_clip_y = img_h - bey - 1
+    b_clip_w = bex - bsx + 1
+    b_clip_h = bey - bsy + 1
+    # 배경은 화면 전체(800x600)로 그리기
+    alp_image.clip_draw(b_clip_x, b_clip_y, b_clip_w, b_clip_h, 400, 300, 800, 600)
+
+
     sx, sy = sprite_size['alphabet_table'][0]
     ex, ey = sprite_size['alphabet_table'][1]
 
@@ -110,7 +122,7 @@ def draw():
     y_from_bottom = clip_h - y_from_top
 
     # 화면 좌표로 변환
-    arrow_x = table_left + x_from_left * scale_img
+    arrow_x = table_left + x_from_left * scale_img - 7 * scale_img  # 화살표 이미지 폭 고려
     arrow_y = table_bottom + y_from_bottom * scale_img
 
     # 화살표 클립 정보 및 그리기
