@@ -140,6 +140,16 @@ def draw():
 
     update_canvas()
 
+# python
+def save_selected_to_file():
+    global selected
+    try:
+        path = os.path.join(os.getcwd(), 'selected_alphabets.txt')
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(''.join(selected) + '\n')
+    except Exception as e:
+        print('Failed to save selected alphabets:', e)
+
 def handle_events():
     global arrow_col, arrow_row, selected
     events = get_events()
@@ -149,6 +159,7 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
         elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            save_selected_to_file()
             game_framework.change_mode(play_mode)
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_LEFT:
@@ -160,10 +171,9 @@ def handle_events():
             elif event.key == SDLK_DOWN:
                 arrow_row = min(TOTAL_ROWS - 1, arrow_row + 1)
             elif event.key == SDLK_z:
-                # 현재 셀의 인덱스(세트 내부 인덱스)
                 set_idx = arrow_col // COLS
                 col_in_set = arrow_col % COLS
-                idx_in_set = arrow_row * COLS + col_in_set  # 0..29 가능, 실제 알파벳은 0..25
+                idx_in_set = arrow_row * COLS + col_in_set
                 if idx_in_set < 26 and len(selected) < 5:
                     if set_idx == 0:
                         selected.append(string.ascii_uppercase[idx_in_set])
@@ -172,3 +182,4 @@ def handle_events():
             elif event.key == SDLK_x:
                 if selected:
                     selected.pop()
+
