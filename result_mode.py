@@ -96,5 +96,4 @@ def handle_events():
             game_framework.quit()
         elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
             game_framework.change_mode(intro_mode)
-            game_framework.save_selected_to_file()
             # 선택 저장 함수가 game_framework나 다른 모듈에 있으면 필요 시 호출
