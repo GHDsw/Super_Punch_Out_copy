@@ -6,9 +6,10 @@ import game_world
 
 from boy import Boy
 from rings import Rings
-
+from enemy import Enemy
 
 boy = None
+enemy = None
 
 def handle_events():
     event_list = get_events()
@@ -22,6 +23,7 @@ def handle_events():
 
 def init():
     global boy
+    global enemy
     #global balls
     # global zombies
 
@@ -30,6 +32,9 @@ def init():
     game_world.add_collision_pair('grass:ball', rings, None)
 
     boy = Boy()
+    game_world.add_object(boy, 2)
+
+    enemy = Enemy()
     game_world.add_object(boy, 1)
 
     # balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
