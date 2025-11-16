@@ -1,10 +1,9 @@
+# python
+import os
 import game_framework
 from pico2d import *
 
 import intro_mode
-
-sprite_size = {'alphabet_table': [[1690, 2845], [1849, 2952]],
-               }
 
 TIME_PER_ACTION = 10
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
@@ -13,6 +12,9 @@ FRAMES_PER_ACTION = 22
 image = None
 frame = 0
 
+font = None
+lines = []
+
 def pause():
     pass
 
@@ -20,33 +22,69 @@ def resume():
     pass
 
 def init():
-    global image, intro_start_time
-
+    global image, font, lines
     image = load_image('./image/Intro,Menu.png')
-    intro_start_time = get_time()
+    # 폰트 로드 (없으면 None)
+    try:
+        font = load_font('ENCR10B.TTF', 16)
+    except:
+        font = None
+    # record.txt 파일 읽기 (없으면 빈 리스트)
+    try:
+        path = os.path.join(os.getcwd(), 'record.txt')
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines()
+    except Exception:
+        lines = []
 
 def finish():
-    global image
-    del image
+    global image, font
+    if image:
+        del image
+    image = None
+    if font:
+        del font
+    font = None
 
 def update():
     global frame
+    frame += 1
 
 def draw():
     clear_canvas()
-    sx, sy = sprite_size['alphabet_table'][0]
-    ex, ey = sprite_size['alphabet_table'][1]
 
-    img_h = image.h  # 이미지 전체 높이
-    clip_x = sx
-    clip_y = img_h - ey - 1  # top-based y -> bottom-based y 변환
-    clip_w = ex - sx + 1
-    clip_h = ey - sy + 1
-    # 22프레임, 한줄에 8프레임씩
-    # 20,356 , 257,579 -> 296,356 , 551,579
-    # 각 프레임은 20*20 차이
-    #image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
-    image.clip_draw(clip_x, clip_y, clip_w, clip_h, 400, 300)
+    # 중심 좌표
+    cx, cy = 400, 300
+
+    # 화면에 이미지나 배경이 필요하면 여기 그리기 (선택)
+    # image.clip_draw( ... )  # 필요 시 사용
+
+    # 텍스트 블록 중앙 정렬하여 그리기
+    line_count = len(lines)
+    if line_count == 0:
+        # 파일이 비어있으면 안내 텍스트
+        msg = 'No records'
+        if font:
+            w = len(msg) * 16
+            font.draw(cx - w / 2, cy, msg, (255, 255, 255))
+        else:
+            draw_rectangle(cx - 60, cy - 10, cx + 60, cy + 10)
+    else:
+        char_width = 16    # 문자당 대략 폭 (폰트가 없을 때도 일관되게 계산)
+        line_spacing = 30  # 줄 간격
+        total_height = line_count * line_spacing
+        start_y = cy + (total_height / 2) - (line_spacing / 2)
+        for i, line in enumerate(lines):
+            y = start_y - i * line_spacing
+            if font:
+                # 간단한 가로 중앙 정렬 (문자 폭 추정)
+                x = cx - (len(line) * char_width) / 2
+                font.draw(x, y, line, (255, 255, 255))
+            else:
+                x = cx - (len(line) * char_width) / 2
+                # 폰트가 없으면 사각형으로 대체 (시각 확인용)
+                draw_rectangle(x - 8, y - 8, x + len(line) * char_width + 8, y + 8)
+
     update_canvas()
 
 def handle_events():
@@ -59,3 +97,4 @@ def handle_events():
         elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
             game_framework.change_mode(intro_mode)
             game_framework.save_selected_to_file()
+            # 선택 저장 함수가 game_framework나 다른 모듈에 있으면 필요 시 호출

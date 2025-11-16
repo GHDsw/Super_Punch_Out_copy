@@ -158,6 +158,7 @@ class Attack:
         self.boy = boy
 
     def enter(self, e):
+        self.boy.x,self.boy.y = 400,300
         self.boy.wait_time = get_time()
         if z_down(e):
             self.boy.dir = -1
