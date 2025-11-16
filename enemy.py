@@ -4,6 +4,9 @@ import game_framework
 import game_world
 
 from pico2d import *
+from state_machine import StateMachine
+
+time_out = lambda e: e[0] == 'TIMEOUT'
 
 # zombie Run Speed
 PIXEL_PER_METER = (10.0 / 0.3)  # 10 pixel 30 cm
@@ -45,12 +48,78 @@ sprite_size = {
     '1': [[0, 0], [0, 0]], '2': [[0, 0], [0, 0]], '3': [[0, 0], [0, 0]], '4': [[0, 0], [0, 0]], '5': [[0, 0], [0, 0]]
 }
 
+class IDLE:
+    def __init__(self):
+        pass
+
+    def enter(self):
+        pass
+
+    def exit(self):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        pass
+
+
+class MOVE:
+    def __init__(self):
+        pass
+
+    def enter(self):
+        pass
+
+    def exit(self):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        pass
+
+
+class ATTACK:
+    def __init__(self):
+        pass
+
+    def enter(self):
+        pass
+
+    def exit(self):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        pass
+
+
 class Enemy:
     def __init__(self):
+        self.IDLE = None
         self.x, self.y = 400, 500
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = random.randint(0, 9)
         self.dir = random.choice([-1,1])
+        self.state_machine = StateMachine(
+            self.IDLE,
+            {
+                self.IDLE: {up_down: self.IDLE, up_up: self.IDLE, down_down: self.IDLE, down_up: self.IDLE,
+                            z_down: self.ATTACK, x_down: self.ATTACK,
+                            time_out: self.IDLE,
+                            right_down: self.MOVE, left_down: self.MOVE},
+                self.MOVE: {right_up: self.MOVE, left_up: self.MOVE,
+                            right_down: self.MOVE, left_down: self.MOVE,
+                            Return: self.IDLE
+                            },
+                self.ATTACK: {time_out: self.IDLE}
+            }
+        )
 
 
     def get_bb(self):
