@@ -144,9 +144,9 @@ def draw():
 def save_selected_to_file():
     global selected
     try:
-        path = os.path.join(os.getcwd(), 'selected_alphabets.txt')
+        path = os.path.join(os.getcwd(), 'record.txt')
         with open(path, 'a', encoding='utf-8') as f:
-            f.write(''.join(selected) + '\n')
+            f.write(''.join(selected))
     except Exception as e:
         print('Failed to save selected alphabets:', e)
 
