@@ -3,6 +3,7 @@ from pico2d import *
 
 import game_framework
 import game_world
+import result_mode
 
 from boy import Boy
 from rings import Rings
@@ -18,6 +19,8 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
+        elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            game_framework.change_mode(result_mode)
         else:
             boy.handle_event(event)
 
