@@ -2,6 +2,7 @@
 import os
 import game_framework
 from pico2d import *
+import re
 
 import intro_mode
 
@@ -21,19 +22,52 @@ def pause():
 def resume():
     pass
 
+def _load_sorted_records_by_record(path):
+    """
+    각 라인에서 '첫 번째 공백 문자 이후'부터 숫자를 찾아 파싱.
+    - 공백이 있으면 공백 뒤 부분에서 숫자를 검색
+    - 공백이 없으면 전체 라인에서 숫자를 검색 (기존 동작 보존)
+    숫자가 있으면 숫자 기준 내림차순, 없으면 문자열 기준 내림차순으로 반환
+    """
+    numeric = []
+    non_numeric = []
+    num_re = re.compile(r'([0-9]+(?:\.[0-9]+)?)')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for raw_line in f.read().splitlines():
+                line = raw_line  # 원문 보존
+                # 첫 공백 이후를 검색 영역으로 설정
+                m_space = re.search(r'\s', line)
+                if m_space:
+                    search_area = line[m_space.end():]  # 첫 공백 문자 다음부터
+                else:
+                    search_area = line  # 공백 없으면 전체 라인
+                m = num_re.search(search_area)
+                if m:
+                    try:
+                        val = float(m.group(1))
+                        numeric.append((val, line))
+                    except Exception:
+                        non_numeric.append(line)
+                else:
+                    non_numeric.append(line)
+    except Exception:
+        return []
+
+    numeric.sort(key=lambda x: x[0], reverse=True)
+    non_numeric.sort(reverse=True)
+    return [line for _, line in numeric] + non_numeric
+
 def init():
     global image, font, lines
     image = load_image('./image/Intro,Menu.png')
-    # 폰트 로드 (없으면 None)
     try:
         font = load_font('ENCR10B.TTF', 16)
     except:
         font = None
-    # record.txt 파일 읽기 (없으면 빈 리스트)
     try:
         path = os.path.join(os.getcwd(), 'record.txt')
-        with open(path, 'r', encoding='utf-8') as f:
-            lines = f.read().splitlines()
+        lines = _load_sorted_records_by_record(path)
     except Exception:
         lines = []
 
