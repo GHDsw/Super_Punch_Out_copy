@@ -1,7 +1,7 @@
 import game_framework
 from pico2d import *
 
-import play_mode
+import account_resist_mode
 
 sprite_size = {'ring': [[1124, 66], [1379, 289]],
                'title': [[20, 66], [275,289]],
@@ -38,7 +38,7 @@ def update():
     # 로고 모드 2초간 지속
     global intro_start_time
     if get_time() - title_start_time > 30.0:
-        game_framework.change_mode(play_mode)
+        game_framework.change_mode(account_resist_mode)
 
     global frame_ring
     frame_ring = (frame_ring + FRAMES_PER_ACTION_ring * ACTION_PER_TIME * game_framework.frame_time) % 4
@@ -86,4 +86,4 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
         elif (event.type,event.key) == (SDL_KEYDOWN, SDLK_SPACE):
-            game_framework.change_mode(play_mode)
+            game_framework.change_mode(account_resist_mode)
