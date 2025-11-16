@@ -1,4 +1,5 @@
 import time
+import os
 frame_time = 0.0
 
 running = None
@@ -36,9 +37,20 @@ def pop_mode():
         stack[-1].resume()
 
 
+def save_selected_to_file():
+    global selected
+    try:
+        path = os.path.join(os.getcwd(), 'record.txt')
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write('\n')
+    except Exception as e:
+        print('Failed to save selected alphabets:', e)
+
+
 def quit():
     global running
     running = False
+    save_selected_to_file()
 
 
 def run(start_mode):
