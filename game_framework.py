@@ -37,20 +37,27 @@ def pop_mode():
         stack[-1].resume()
 
 
-def save_selected_to_file():
-    global selected
+def save_record_to_file(record):
+    try:
+        path = os.path.join(os.getcwd(), 'record.txt')
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(str(record)+'\n')
+    except Exception as e:
+        print('Failed to save record:', e)
+
+def save_enter_to_file():
     try:
         path = os.path.join(os.getcwd(), 'record.txt')
         with open(path, 'a', encoding='utf-8') as f:
             f.write('\n')
     except Exception as e:
-        print('Failed to save selected alphabets:', e)
+        print('Failed to save enter:', e)
 
 
 def quit():
     global running
     running = False
-    save_selected_to_file()
+    save_enter_to_file()
 
 
 def run(start_mode):

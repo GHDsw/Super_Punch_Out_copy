@@ -12,7 +12,10 @@ from enemy import Enemy
 boy = None
 enemy = None
 
+start_time = 0.0
+
 def handle_events():
+    global start_time
     event_list = get_events()
     for event in event_list:
         if event.type == SDL_QUIT:
@@ -20,6 +23,8 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
         elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            record = get_time() - start_time
+            game_framework.save_record_to_file(record)
             game_framework.change_mode(result_mode)
         else:
             boy.handle_event(event)
@@ -27,6 +32,7 @@ def handle_events():
 def init():
     global boy
     global enemy
+    global start_time
     #global balls
     # global zombies
 
@@ -41,6 +47,8 @@ def init():
     game_world.add_object(enemy, 1)
 
     game_world.add_collision_pair('boy:enemy', boy, None)
+
+    start_time = get_time()
 
     # balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
     # game_world.add_objects(balls, 1)

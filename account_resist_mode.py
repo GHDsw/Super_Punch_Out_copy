@@ -158,7 +158,7 @@ def save_selected_to_file():
     try:
         path = os.path.join(os.getcwd(), 'record.txt')
         with open(path, 'a', encoding='utf-8') as f:
-            f.write(''.join(selected))
+            f.write(''.join(selected) + ' ')
     except Exception as e:
         print('Failed to save selected alphabets:', e)
 
