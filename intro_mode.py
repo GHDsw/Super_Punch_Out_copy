@@ -65,7 +65,7 @@ def draw():
     #image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
     image.clip_draw(clip_x + clip_w*(int(frame)%8)+gap*(int(frame)%8),
                     clip_y-(clip_h*(int(frame)//8)+gap*(int(frame)//8)),
-                    clip_w, clip_h, 400, 300)
+                    clip_w, clip_h, 400, 300, 800, 600)
     update_canvas()
 
 def handle_events():

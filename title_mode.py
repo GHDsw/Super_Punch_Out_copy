@@ -63,7 +63,7 @@ def draw():
     # image.clip_draw(left, bottom, clip_w, clip_h, 400, 300)
     image.clip_draw(clip_x + clip_w * (int(frame_ring) % 4) + gap * (int(frame_ring) % 4),
                     clip_y,
-                    clip_w, clip_h, 400, 300, clip_w*2, clip_h*2)
+                    clip_w, clip_h, 400, 300, 800, 600)
     #frame_logo 부분
     sxL, syL = sprite_size['title'][0]
     exL, eyL = sprite_size['title'][1]
@@ -75,7 +75,7 @@ def draw():
     # 각 프레임은 20 차이
     image.clip_draw(clip_x + clip_w * (int(frame_logo) % 3+1) + gap * (int(frame_logo) % 3+1),
                     clip_y,
-                    clip_w, clip_h, 400, 300)
+                    clip_w, clip_h, 400, 400)
     update_canvas()
 
 def handle_events():

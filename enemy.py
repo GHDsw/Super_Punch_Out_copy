@@ -131,7 +131,7 @@ class Enemy:
     def __init__(self):
 
 
-        self.x, self.y = 400, 500
+        self.x, self.y = 400, 300
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = random.randint(0, 9)
         self.dir = random.choice([-1,1])
