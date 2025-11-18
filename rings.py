@@ -42,10 +42,10 @@ class Rings:
         self.image.clip_draw(clip_x + clip_w * ring_num + x_gap * ring_num,
                         clip_y - (clip_h * (int(self.frame) % 4) + gap * (int(self.frame) % 4)),
                         clip_w, clip_h, 400, 300, clip_w*3, clip_h*3)
-        draw_rectangle(*self.get_bb())
+        #draw_rectangle(*self.get_bb())
 
-    def get_bb(self):
-        return 0, 0, 1600-1, 60
+    # def get_bb(self):
+    #     return 0, 0, 1600-1, 60
 
     def handle_collision(self, group, other):
         pass

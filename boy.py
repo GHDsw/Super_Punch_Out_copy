@@ -145,12 +145,15 @@ class Idle:
     def draw(self):
         if self.boy.face_dir == 1: # up
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
         elif self.boy.face_dir == -1: # down
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
         else: #진짜 idle
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
 
 class Attack:
@@ -204,15 +207,17 @@ class Attack:
             #해결 방법이 대체 뭐임 아오
             if self.boy.dir == 1: #right
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                                   0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
             elif self.boy.dir == -1: #left
-                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x, self.boy.y)
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                         self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
         elif self.boy.face_dir == -1: # down
             if self.boy.dir == 1:
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                                   0, 'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
             elif self.boy.dir == -1:  # left
-                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,self.boy.y)
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                         self.boy.x,self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
 
 class Move:
@@ -270,11 +275,11 @@ class Move:
         if self.boy.dir == 1: # right
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
             self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                               0 ,'h', self.boy.x, self.boy.y, self.boy.clip_w, self.boy.clip_h)
+                                               0 ,'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
         else: # face_dir == -1: # left
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h, self.boy.x,
-                                     self.boy.y)
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
 
 class Boy:
@@ -298,6 +303,9 @@ class Boy:
         self.clip_w = 0
         self.clip_h = 0
 
+        self.output_size_w = 0
+        self.output_size_h = 0
+
         self.IDLE = Idle(self)
         self.MOVE = Move(self)
         self.ATTACK = Attack(self)
@@ -319,6 +327,8 @@ class Boy:
 
     def update(self):
         self.state_machine.update()
+        self.output_size_w = self.clip_w * 1.5
+        self.output_size_h = self.clip_h * 1.5
 
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
@@ -336,7 +346,7 @@ class Boy:
 
     def get_bb(self):
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현
-        return self.x - 20, self.y - 50, self.x + 20, self.y + 40
+        return self.x - self.clip_w/2, self.y - self.clip_h/2, self.x + self.clip_w/2, self.y + self.clip_h/2
 
     def handle_collision(self, group, other):
         if group == 'boy:enemy':

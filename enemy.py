@@ -73,7 +73,8 @@ class Idle:
         pass
 
     def draw(self):
-        self.enemy.image.clip_draw(self.enemy.clip_x, self.enemy.clip_y, self.enemy.clip_w, self.enemy.clip_h, self.enemy.x,self.enemy.y)
+        self.enemy.image.clip_draw(self.enemy.clip_x, self.enemy.clip_y, self.enemy.clip_w, self.enemy.clip_h,
+                                   self.enemy.x,self.enemy.y, self.enemy.clip_w*2, self.enemy.clip_h*2)
 
 
 class Move:
@@ -165,7 +166,7 @@ class Enemy:
 
 
     def get_bb(self):
-        return self.x - 100, self.y - 100, self.x + 100, self.y + 100
+        return self.x - self.clip_w, self.y - self.clip_h, self.x + self.clip_w, self.y + self.clip_h
 
     def update(self):
         # self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
@@ -183,6 +184,7 @@ class Enemy:
         self.state_machine.draw()
         # if self.dir < 0:
         #     self.image.composite_draw(0, 'h', self.x, self.y, self.size, self.size)
+        draw_rectangle(*self.get_bb())
         draw_rectangle(*self.get_bb())
         pass
 
