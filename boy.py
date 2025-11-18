@@ -285,7 +285,7 @@ class Move:
 class Boy:
     def __init__(self):
 
-        self.ball_count = 10
+        self.hp = 10
 
         self.font = load_font('ENCR10B.TTF', 16)
 
@@ -336,7 +336,7 @@ class Boy:
 
     def draw(self):
         self.state_machine.draw()
-        self.font.draw(self.x-10, self.y + 50, f'{self.ball_count:02d}', (255, 255, 0))
+        self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
         # *을 붙이는 이유
         # get_bb()가 반환하는 값이 튜플이기 때문에 언패킹을 해줘야 한다.
         # draw_rectangle 함수는 4개의 인자(x1,y1,x2,y2)를 받아야 하는데
