@@ -6,6 +6,11 @@ import re
 
 import intro_mode
 
+sprite_size = {
+               'a': [[1690, 2845], [1996, 2856]],
+               'background': [[1952, 844], [2207, 1067]],
+               }
+
 TIME_PER_ACTION = 10
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 22
@@ -85,7 +90,18 @@ def update():
     frame += 1
 
 def draw():
+    global image
     clear_canvas()
+
+    bsx, bsy = sprite_size['background'][0]
+    bex, bey = sprite_size['background'][1]
+    img_h = image.h
+    b_clip_x = bsx
+    b_clip_y = img_h - bey - 1
+    b_clip_w = bex - bsx + 1
+    b_clip_h = bey - bsy + 1
+    # 배경은 화면 전체(800x600)로 그리기
+    image.clip_draw(b_clip_x, b_clip_y, b_clip_w, b_clip_h, 400, 300, 800, 600)
 
     # 중심 좌표
     cx, cy = 400, 300
