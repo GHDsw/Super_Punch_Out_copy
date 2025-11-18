@@ -11,7 +11,6 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 22
 
 image = None
-intro_start_time = 0.0
 frame = 0
 
 def pause():
@@ -24,8 +23,6 @@ def init():
     global image, intro_start_time
 
     image = load_image('./image/Intro,Menu.png')
-    intro_start_time = get_time()
-
 
 
 def finish():
@@ -33,19 +30,17 @@ def finish():
     del image
 
 def update():
-    #로고 모드 2초간 지속
-    global intro_start_time
-    if get_time() - intro_start_time > 30.0:
-        game_framework.change_mode(title_mode)
-
     global frame
     global ACTION_PER_TIME
     if frame > 6:
         ACTION_PER_TIME = 1.0 / TIME_PER_ACTION * 10
+    else:
+        ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 
     frame = (frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 22
 
     if frame >= 21:
+        frame = 0
         game_framework.change_mode(title_mode)
 
 def draw():
@@ -69,6 +64,7 @@ def draw():
     update_canvas()
 
 def handle_events():
+    global frame
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
@@ -76,4 +72,5 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
         elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            frame = 0
             game_framework.change_mode(title_mode)
