@@ -5,6 +5,7 @@ import game_framework
 import game_world
 import result_mode
 
+from state_bar import State_bar
 from boy import Boy
 from rings import Rings
 from enemy import Enemy
@@ -32,6 +33,7 @@ def handle_events():
 def init():
     global boy
     global enemy
+    global state_bar
     global start_time
     #global balls
     # global zombies
@@ -45,6 +47,9 @@ def init():
 
     enemy = Enemy()
     game_world.add_object(enemy, 1)
+
+    state_bar = State_bar()
+    game_world.add_object(state_bar, 3)
 
     game_world.add_collision_pair('boy:enemy', boy, None)
 
