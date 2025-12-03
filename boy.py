@@ -153,13 +153,7 @@ class Guard:
         pass
 
     def do(self):
-        self.boy.t += MOVE_SPEED_PPS * game_framework.frame_time / self.boy.distance
-        if self.boy.t < 1.0:
-            #self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
-            self.boy.y = (1.0 - self.boy.t) * self.boy.start_y + self.boy.t * (self.boy.origin_y + self.boy.dir * 50)
-        else:
-            self.boy.y = self.boy.start_y = self.boy.origin_y + self.boy.dir * 50
-            self.boy.t = 0.0
+        pass
 
     def draw(self):
         self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
@@ -260,11 +254,7 @@ class Attack:
         self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
 
         if get_time() - self.boy.wait_time > 0.5:
-            self.boy.dir = 0
-            if self.boy.up_state:
-                self.boy.state_machine.handle_state_event(('UP_DONE', None))
-            else:
-                self.boy.state_machine.handle_state_event(('DONE', None))
+            self.boy.state_machine.handle_state_event(('DONE', None))
 
     def draw(self):
         if self.boy.up_state: # up
@@ -325,7 +315,6 @@ class Boy:
                 },
                 self.ATTACK : {
                     done: self.IDLE,
-                    up_done: self.GUARD,
                 }
             }
         )
@@ -338,7 +327,6 @@ class Boy:
 
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
-        pass
 
     def draw(self):
         self.state_machine.draw()
