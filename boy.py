@@ -87,7 +87,7 @@ sprite_size = {
 
 def reposition(self):
     self.x, self.y = self.origin_x, self.origin_y
-    self.dir, self.face_dir = 0, -1
+    self.dir = 0
 
 
 class Idle:
@@ -96,139 +96,46 @@ class Idle:
         self.boy = boy
         self.t = 0.0
         self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
-        self.move = False
 
     def enter(self, e):
-        self.boy.x, self.boy.y = self.boy.origin_x, self.boy.origin_y
         self.boy.wait_time = get_time()
 
         self.boy.dir = 0
         sx, sy = sprite_size['IDle'][0]
         ex, ey = sprite_size['IDle'][1]
 
-        if up_down(e):
-            self.boy.face_dir = 1
-            sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
-            ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
-            self.boy.x, self.boy.y = self.boy.origin_x, self.boy.origin_y + self.boy.face_dir * 50
-        elif down_down(e):
-            self.boy.face_dir = -1
-            sx, sy = sprite_size['backstep'][0]  # 좌상 (x1, y1)
-            ex, ey = sprite_size['backstep'][1]  # 우하 (x2, y2)
-            self.boy.x, self.boy.y = self.boy.origin_x, self.boy.origin_y + self.boy.face_dir * 50
-        elif up_up(e) or down_up(e):
-            self.move = True
-
-        self.boy.clip_x = sx
-        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
-        self.boy.clip_w = ex - sx + 1
-        self.boy.clip_h = ey - sy + 1
-
-
     def exit(self, e):
-        # if space_down(e):
-        #     self.boy.fire_ball()
         pass
-
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
-        # if get_time() - self.boy.wait_time > 1:
-        #     self.boy.dir=0
-        #     self.boy.state_machine.handle_state_event(('TIMEOUT', None))
-
-        if self.move:
-            if self.t < 1.0:
-                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-                self.boy.y = (1.0 - self.t) * (self.boy.origin_y + self.boy.face_dir * 50) + self.t * self.boy.origin_y
-                # self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
-            elif self.t >= 1.0:
-                self.boy.x, self.boy.y = self.boy.origin_x, self.boy.origin_y
-                self.t = 0.0
-                self.move = False
-
 
     def draw(self):
-        if self.boy.face_dir == 1: # up
-            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 300, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-        elif self.boy.face_dir == -1: # down
-            #self.boy.image.clip_draw(int(self.boy.frame) * 100, 200, 100, 100, self.boy.x, self.boy.y)
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-        else: #진짜 idle
-            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                     self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+        self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                 self.boy.x, self.boy.y,
+                                 self.boy.output_size_w, self.boy.output_size_h)
 
 
-class Attack:
+class GAURD:
     def __init__(self, boy):
-        self.boy = boy
+        pass
 
     def enter(self, e):
-        self.boy.wait_time = get_time()
-        if z_down(e):
-            self.boy.dir = -1
-        if x_down(e):
-            self.boy.dir = 1
+        pass
 
     def exit(self, e):
-        # if space_down(e):
-        #     self.boy.fire_ball()
         pass
 
     def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
-
-        if self.boy.face_dir == 1:
-            if self.boy.frame == 1:
-                sx, sy = sprite_size['HeadAttackReady'][0]  # 좌상 (x1, y1)
-                ex, ey = sprite_size['HeadAttackReady'][1]  # 우하 (x2, y2)
-            else:
-                sx, sy = sprite_size['HeadAttack'][0]  # 좌상 (x1, y1)
-                ex, ey = sprite_size['HeadAttack'][1]  # 우하 (x2, y2)
-        else:
-            if self.boy.frame == 1:
-                sx, sy = sprite_size['BodyAttackReady'][0]  # 좌상 (x1, y1)
-                ex, ey = sprite_size['BodyAttackReady'][1]  # 우하 (x2, y2)
-            else:
-                sx, sy = sprite_size['BodyAttack'][0]  # 좌상 (x1, y1)
-                ex, ey = sprite_size['BodyAttack'][1]  # 우하 (x2, y2)
-        self.boy.clip_x = sx
-        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
-        self.boy.clip_w = ex - sx + 1
-        self.boy.clip_h = ey - sy + 1
-
-        #타임아웃 넘기는거 위치 바꿨더니 해결됨 ㅋㅋ
-        if get_time() - self.boy.wait_time > 0.5:
-            self.boy.dir = 0
-            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+        pass
 
     def draw(self):
-        if self.boy.face_dir == 1: # up
-            #오른손 펀치를 날리면 왼손 펀치를 한번 더 날리는 모션이 나옴
-            #timeout으로 idel 넘어갈때 이미지 위치가 왼손 펀치로 설정되나본데
-            #해결 방법이 대체 뭐임 아오
-            if self.boy.dir == 1: #right
-                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-            elif self.boy.dir == -1: #left
-                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                         self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-        elif self.boy.face_dir == -1: # down
-            if self.boy.dir == 1:
-                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-            elif self.boy.dir == -1:  # left
-                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                         self.boy.x,self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+        pass
 
 
 class Move:
     def __init__(self, boy):
         self.boy = boy
-        self.Return = False
         self.t = 0.0
         self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
 
@@ -286,6 +193,68 @@ class Move:
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                      self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
+class Attack:
+    def __init__(self, boy):
+        self.boy = boy
+
+    def enter(self, e):
+        self.boy.wait_time = get_time()
+        if z_down(e):
+            self.boy.dir = -1
+        if x_down(e):
+            self.boy.dir = 1
+
+    def exit(self, e):
+        # if space_down(e):
+        #     self.boy.fire_ball()
+        pass
+
+    def do(self):
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
+
+        if self.boy.face_dir == 1:
+            if self.boy.frame == 1:
+                sx, sy = sprite_size['HeadAttackReady'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['HeadAttackReady'][1]  # 우하 (x2, y2)
+            else:
+                sx, sy = sprite_size['HeadAttack'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['HeadAttack'][1]  # 우하 (x2, y2)
+        else:
+            if self.boy.frame == 1:
+                sx, sy = sprite_size['BodyAttackReady'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['BodyAttackReady'][1]  # 우하 (x2, y2)
+            else:
+                sx, sy = sprite_size['BodyAttack'][0]  # 좌상 (x1, y1)
+                ex, ey = sprite_size['BodyAttack'][1]  # 우하 (x2, y2)
+        self.boy.clip_x = sx
+        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
+        self.boy.clip_w = ex - sx + 1
+        self.boy.clip_h = ey - sy + 1
+
+        #타임아웃 넘기는거 위치 바꿨더니 해결됨 ㅋㅋ
+        if get_time() - self.boy.wait_time > 0.5:
+            self.boy.dir = 0
+            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+
+    def draw(self):
+        if self.boy.face_dir == 1: # up
+            if self.boy.dir == 1: #right
+                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+            elif self.boy.dir == -1: #left
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                         self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+        elif self.boy.face_dir == -1: # down
+            if self.boy.dir == 1:
+                self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                                   0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+            elif self.boy.dir == -1:  # left
+                self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                         self.boy.x,self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+
+
+
+
 
 class Boy:
     def __init__(self):
@@ -296,20 +265,13 @@ class Boy:
 
         self.x, self.y = self.origin_x, self.origin_y = 400, 100
         self.frame = 0
-        self.face_dir = -1
         self.dir = 0
         self.image = load_image('./image/Little_Mac.png')
 
-        self.sx, self.sy = 0, 0
-
         self.img_h = self.image.h  # 이미지 전체 높이
-        self.clip_x = 0
-        self.clip_y = 0
-        self.clip_w = 0
-        self.clip_h = 0
+        self.clip_x = self.clip_y = self.clip_w = self.clip_h = 0
 
-        self.output_size_w = 0
-        self.output_size_h = 0
+        self.output_size_w = self.output_size_h = 0
 
         self.IDLE = Idle(self)
         self.MOVE = Move(self)
@@ -317,15 +279,22 @@ class Boy:
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {up_down: self.IDLE, up_up:self.IDLE , down_down: self.IDLE, down_up:self.IDLE,
-                             z_down: self.ATTACK, x_down: self.ATTACK,
-                             time_out: self.IDLE,
-                             right_down: self.MOVE, left_down: self.MOVE},
-                self.MOVE : {right_up: self.MOVE, left_up: self.MOVE,
-                             right_down: self.MOVE, left_down: self.MOVE,
-                             Return: self.IDLE
-                             },
-                self.ATTACK : {time_out: self.IDLE}
+                self.IDLE : {
+                    z_down: self.ATTACK, x_down: self.ATTACK,
+                    up_down: self.GAURD,
+                    down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
+                },
+                self.GAURD: {
+                    up_up: self.IDLE
+                },
+                self.MOVE : {
+                    down_up: self.IDLE,
+                    right_up: self.IDLE, left_up: self.IDLE,
+                    time_out: self.IDLE
+                },
+                self.ATTACK : {
+                    time_out: self.IDLE
+                }
             }
         )
 
