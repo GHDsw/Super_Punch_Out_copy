@@ -5,6 +5,7 @@ import common
 
 import game_world
 import game_framework
+from game_framework import carculate_image_position
 
 from state_machine import StateMachine
 
@@ -14,7 +15,7 @@ def space_down(e): # e is space down ?
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 
-Return = lambda e: e[0] == 'RETURN'
+done = lambda e: e[0] == 'DONE'
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
@@ -99,24 +100,35 @@ class Idle:
 
     def enter(self, e):
         self.boy.wait_time = get_time()
-
         self.boy.dir = 0
-        sx, sy = sprite_size['IDle'][0]
-        ex, ey = sprite_size['IDle'][1]
 
     def exit(self, e):
         pass
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
+        #위치가 origin이랑 다르면 돌아오게 하기
+        if self.boy.x != self.boy.origin_x or self.boy.y != self.boy.origin_y:
+            pass
+        #돌아오면 idle 이미지 출력
+        else:
+            sx, sy = sprite_size['IDle'][0]
+            ex, ey = sprite_size['IDle'][1]
+            self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
 
     def draw(self):
-        self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
-                                 self.boy.x, self.boy.y,
-                                 self.boy.output_size_w, self.boy.output_size_h)
+        #치우친 쪽 출력하기 사실상 우측 회피 전용 출력
+        if self.boy.x != self.boy.origin_x:
+            self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                               0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w,
+                                               self.boy.output_size_h)
+        else:
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y,
+                                     self.boy.output_size_w, self.boy.output_size_h)
 
 
-class GAURD:
+class Defense:
     def __init__(self, boy):
         pass
 
@@ -265,7 +277,7 @@ class Boy:
 
         self.x, self.y = self.origin_x, self.origin_y = 400, 100
         self.frame = 0
-        self.dir = 0
+        self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
         self.image = load_image('./image/Little_Mac.png')
 
         self.img_h = self.image.h  # 이미지 전체 높이
@@ -274,6 +286,7 @@ class Boy:
         self.output_size_w = self.output_size_h = 0
 
         self.IDLE = Idle(self)
+        self.DEFENSE = Defense(self)
         self.MOVE = Move(self)
         self.ATTACK = Attack(self)
         self.state_machine = StateMachine(
@@ -281,10 +294,10 @@ class Boy:
             {
                 self.IDLE : {
                     z_down: self.ATTACK, x_down: self.ATTACK,
-                    up_down: self.GAURD,
+                    up_down: self.DEFENSE,
                     down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
                 },
-                self.GAURD: {
+                self.DEFENSE: {
                     up_up: self.IDLE
                 },
                 self.MOVE : {
