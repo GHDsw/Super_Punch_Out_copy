@@ -87,36 +87,35 @@ sprite_size = {
 
 
 def reposition(self):
-    self.x, self.y = self.origin_x, self.origin_y
-    self.dir = 0
+    self.start_x, self.start_y = self.x, self.y
+    self.t = 0.0
 
 
 class Idle:
 
     def __init__(self, boy):
         self.boy = boy
-        self.t = 0
-        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
 
     def enter(self, e):
         self.boy.wait_time = get_time()
         self.boy.dir = 0
 
     def exit(self, e):
+        reposition(self.boy)
         pass
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
         #위치가 origin이랑 다르면 돌아오게 하기
         if self.boy.x != self.boy.origin_x or self.boy.y != self.boy.origin_y:
-            if self.t < 1.0:
+            if self.boy.t < 1.0:
                 # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
-                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-                self.boy.y = (1.0 - self.t) * self.boy.start_y + self.t * (self.boy.origin_y)
-                self.boy.x = (1.0 - self.t) * self.boy.start_x + self.t * (self.boy.origin_x)
+                self.boy.t += MOVE_SPEED_PPS * game_framework.frame_time / self.boy.distance
+                self.boy.y = (1.0 - self.boy.t) * self.boy.start_y + self.boy.t * (self.boy.origin_y)
+                self.boy.x = (1.0 - self.boy.t) * self.boy.start_x + self.boy.t * (self.boy.origin_x)
             else:
                 self.boy.y = self.boy.start_y = self.boy.origin_y
-                self.t = 0.0
+                self.boy.t = 0.0
         #돌아오면 idle 이미지 출력
         else:
             sx, sy = sprite_size['IDle'][0]
@@ -138,9 +137,6 @@ class Idle:
 class Guard:
     def __init__(self, boy):
         self.boy = boy
-        self.t = 0
-        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
-        pass
 
     def enter(self, e):
         self.boy.up_state = True
@@ -148,33 +144,29 @@ class Guard:
         ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
         self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
         self.boy.dir = 1
-        pass
 
     def exit(self, e):
+        reposition(self.boy)
         pass
 
     def do(self):
-        self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-        if self.t < 1.0:
+        self.boy.t += MOVE_SPEED_PPS * game_framework.frame_time / self.boy.distance
+        if self.boy.t < 1.0:
             #self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
-            self.boy.y = (1.0 - self.t) * self.boy.start_y + self.t * (self.boy.origin_y + self.boy.dir * 50)
+            self.boy.y = (1.0 - self.boy.t) * self.boy.start_y + self.boy.t * (self.boy.origin_y + self.boy.dir * 50)
         else:
             self.boy.y = self.boy.start_y = self.boy.origin_y + self.boy.dir * 50
-            self.t = 0.0
-        pass
+            self.boy.t = 0.0
 
     def draw(self):
         self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                  self.boy.x, self.boy.y,
                                  self.boy.output_size_w, self.boy.output_size_h)
-        pass
 
 
 class Move:
     def __init__(self, boy):
         self.boy = boy
-        self.t = 0.0
-        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
 
     def enter(self, e):
         if right_down(e):
@@ -301,6 +293,9 @@ class Boy:
         self.up_state = False
 
         self.frame = 0
+        self.t = 0.0
+        self.distance = math.sqrt((self.x - 1280) ** 2 + (self.y - 1024) ** 2)
+
         self.image = load_image('./image/Little_Mac.png')
         self.img_h = self.image.h  # 이미지 전체 높이
         self.clip_x = self.clip_y = self.clip_w = self.clip_h = 0
