@@ -114,6 +114,7 @@ class Idle:
                 self.boy.y = (1.0 - self.boy.t) * self.boy.start_y + self.boy.t * (self.boy.origin_y)
                 self.boy.x = (1.0 - self.boy.t) * self.boy.start_x + self.boy.t * (self.boy.origin_x)
             else:
+                self.boy.x = self.boy.start_x = self.boy.origin_x
                 self.boy.y = self.boy.start_y = self.boy.origin_y
                 self.boy.t = 0.0
         #돌아오면 idle 이미지 출력
@@ -123,8 +124,8 @@ class Idle:
             self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
 
     def draw(self):
-        #치우친 쪽 출력하기 사실상 우측 회피 전용 출력
-        if self.boy.x != self.boy.origin_x:
+        #composite이 필요한 우측 복귀를 출력하기 위함
+        if self.boy.x > self.boy.origin_x:
             self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w,
                                                self.boy.output_size_h)
@@ -170,57 +171,58 @@ class Move:
 
     def enter(self, e):
         if right_down(e):
-            self.boy.dir = 1
+            self.boy.dir = 2
         elif left_down(e):
+            self.boy.dir = -2
+        elif down_down(e):
             self.boy.dir = -1
-        if left_up(e) or right_up(e):
-            self.Return = True
 
     def exit(self, e):
-        # if space_down(e):
-        #     self.boy.fire_ball()
+        reposition(self.boy)
         pass
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
 
-        if self.boy.x <850 and self.boy.x > 750:
-            sx, sy = sprite_size['Move2'][0]
-            ex, ey = sprite_size['Move2'][1]
+        if self.boy.dir == -1:
+            sx, sy = sprite_size['backstep'][0]
+            ex, ey = sprite_size['backstep'][1]
         else:
-            sx, sy = sprite_size['Move1'][0]
-            ex, ey = sprite_size['Move1'][1]
-
-        if self.Return:
-            if self.t < 1.0:
-                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
-                self.boy.x = (1.0 - self.t) * (self.boy.origin_x +self.boy.dir*100) + self.t * self.boy.origin_x
-                self.boy.y = (1.0 - self.t) * (self.boy.origin_y-20) + self.t * self.boy.origin_y
-                #self.boy.y = (1.0 - self.t) * self.t * sy + ey #이렇게 작성하면 통통 튐
+            if self.boy.x <850 and self.boy.x > 750:
+                sx, sy = sprite_size['Move2'][0]
+                ex, ey = sprite_size['Move2'][1]
             else:
-                self.boy.x, self.boy.y = self.boy.origin_x, self.boy.origin_y
-                self.t = 0.0
-                self.Return = False
+                sx, sy = sprite_size['Move1'][0]
+                ex, ey = sprite_size['Move1'][1]
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+
+        self.boy.t += MOVE_SPEED_PPS * game_framework.frame_time / self.boy.distance
+        if self.boy.dir == -1:
+            if self.boy.t < 1.0:
+                # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+                self.boy.y = (1.0 - self.boy.t) * self.boy.start_y + self.boy.t * (self.boy.origin_y + self.boy.dir * 50)
+            else:
+                self.boy.y = self.boy.start_y = self.boy.origin_y + self.boy.dir * 50
+                self.boy.t = 0.0
         else:
-            self.boy.x, self.boy.y = self.boy.origin_x + self.boy.dir*100, self.boy.origin_y-20
+            if self.boy.t < 1.0:
+                # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+                self.boy.x = (1.0 - self.boy.t) * self.boy.start_x + self.boy.t * (self.boy.origin_x + self.boy.dir * 50)
+            else:
+                self.boy.x = self.boy.start_x = self.boy.origin_x + self.boy.dir * 50
+                self.boy.t = 0.0
 
-        self.boy.clip_x = sx
-        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
-        self.boy.clip_w = ex - sx + 1
-        self.boy.clip_h = ey - sy + 1
-
-        if self.boy.x == self.boy.origin_x:
-            self.boy.state_machine.handle_state_event(('RETURN', None))
 
     def draw(self):
-        if self.boy.dir == 1: # right
+        if self.boy.dir == 2: # right
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
             self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                0 ,'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-        else: # face_dir == -1: # left
+        else: # dir == -2 or -1: # left or back
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 0, 100, 100, self.boy.x, self.boy.y)
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                      self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
+
 
 class Attack:
     def __init__(self, boy):
