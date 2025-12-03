@@ -54,6 +54,14 @@ def save_enter_to_file():
         print('Failed to save enter:', e)
 
 
+def carculate_image_position(self, sx, sy, ex, ey):
+    clip_x = sx
+    clip_y = self.img_h - ey - 1  # top-based y -> bottom-based y 변환
+    clip_w = ex - sx + 1
+    clip_h = ey - sy + 1
+    return clip_x, clip_y, clip_w, clip_h
+
+
 def quit():
     global running
     running = False
