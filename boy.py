@@ -16,6 +16,7 @@ def space_down(e): # e is space down ?
 time_out = lambda e: e[0] == 'TIMEOUT'
 
 done = lambda e: e[0] == 'DONE'
+up_done = lambda e: e[0] == 'UP_DONE'
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
@@ -99,6 +100,7 @@ class Idle:
     def enter(self, e):
         self.boy.wait_time = get_time()
         self.boy.dir = 0
+        self.boy.up_state = False
 
     def exit(self, e):
         reposition(self.boy)
@@ -212,7 +214,6 @@ class Move:
                 self.boy.x = self.boy.start_x = self.boy.origin_x + self.boy.dir * 50
                 self.boy.t = 0.0
 
-
     def draw(self):
         if self.boy.dir == 2: # right
             #self.boy.image.clip_draw(int(self.boy.frame) * 100, 100, 100, 100, self.boy.x, self.boy.y)
@@ -227,23 +228,22 @@ class Move:
 class Attack:
     def __init__(self, boy):
         self.boy = boy
+        self.atk_dir = 0
 
     def enter(self, e):
         self.boy.wait_time = get_time()
         if z_down(e):
-            self.boy.dir = -1
+            self.atk_dir = -1
         if x_down(e):
-            self.boy.dir = 1
+            self.atk_dir = 1
 
     def exit(self, e):
-        # if space_down(e):
-        #     self.boy.fire_ball()
         pass
 
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
 
-        if self.boy.face_dir == 1:
+        if self.boy.up_state:
             if self.boy.frame == 1:
                 sx, sy = sprite_size['HeadAttackReady'][0]  # 좌상 (x1, y1)
                 ex, ey = sprite_size['HeadAttackReady'][1]  # 우하 (x2, y2)
@@ -257,29 +257,28 @@ class Attack:
             else:
                 sx, sy = sprite_size['BodyAttack'][0]  # 좌상 (x1, y1)
                 ex, ey = sprite_size['BodyAttack'][1]  # 우하 (x2, y2)
-        self.boy.clip_x = sx
-        self.boy.clip_y = self.boy.img_h - ey - 1  # top-based y -> bottom-based y 변환
-        self.boy.clip_w = ex - sx + 1
-        self.boy.clip_h = ey - sy + 1
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
 
-        #타임아웃 넘기는거 위치 바꿨더니 해결됨 ㅋㅋ
         if get_time() - self.boy.wait_time > 0.5:
             self.boy.dir = 0
-            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+            if self.boy.up_state:
+                self.boy.state_machine.handle_state_event(('UP_DONE', None))
+            else:
+                self.boy.state_machine.handle_state_event(('DONE', None))
 
     def draw(self):
-        if self.boy.face_dir == 1: # up
-            if self.boy.dir == 1: #right
+        if self.boy.up_state: # up
+            if self.atk_dir == 1: #right
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-            elif self.boy.dir == -1: #left
+            elif self.atk_dir == -1: #left
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                          self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-        elif self.boy.face_dir == -1: # down
-            if self.boy.dir == 1:
+        else: # down
+            if self.atk_dir == 1: #right
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
-            elif self.boy.dir == -1:  # left
+            elif self.atk_dir == -1: #left
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                          self.boy.x,self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
@@ -316,7 +315,8 @@ class Boy:
                     down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
                 },
                 self.GUARD: {
-                    up_up: self.IDLE
+                    up_up: self.IDLE,
+                    z_down: self.ATTACK, x_down: self.ATTACK,
                 },
                 self.MOVE : {
                     down_up: self.IDLE,
@@ -324,7 +324,8 @@ class Boy:
                     time_out: self.IDLE
                 },
                 self.ATTACK : {
-                    time_out: self.IDLE
+                    done: self.IDLE,
+                    up_done: self.GUARD,
                 }
             }
         )
@@ -342,12 +343,8 @@ class Boy:
     def draw(self):
         self.state_machine.draw()
         self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
-        # *을 붙이는 이유
-        # get_bb()가 반환하는 값이 튜플이기 때문에 언패킹을 해줘야 한다.
-        # draw_rectangle 함수는 4개의 인자(x1,y1,x2,y2)를 받아야 하는데
-        # get_bb()가 반환하는 값은 하나의 튜플이기 때문에 오류가 발생한다.
-        # 따라서 *을 붙여서 튜플을 언패킹하여 4개의 인자로 전달해준다.
         draw_rectangle(*self.get_bb())
+        print(self.up_state)
 
     def get_bb(self):
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현
