@@ -1,6 +1,7 @@
 from pico2d import load_image, get_time, load_font, draw_rectangle
 from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_UP, SDLK_DOWN, SDLK_z, SDLK_x
 import math
+import common
 
 import game_world
 import game_framework
@@ -84,6 +85,11 @@ sprite_size = {
     }
 
 
+def reposition(self):
+    self.x, self.y = self.origin_x, self.origin_y
+    self.dir, self.face_dir = 0, -1
+
+
 class Idle:
 
     def __init__(self, boy):
@@ -161,7 +167,6 @@ class Attack:
         self.boy = boy
 
     def enter(self, e):
-        self.boy.x,self.boy.y = self.boy.origin_x, self.boy.origin_y
         self.boy.wait_time = get_time()
         if z_down(e):
             self.boy.dir = -1
