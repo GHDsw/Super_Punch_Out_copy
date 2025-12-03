@@ -95,7 +95,7 @@ class Idle:
 
     def __init__(self, boy):
         self.boy = boy
-        self.t = 0.0
+        self.t = 0
         self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
 
     def enter(self, e):
@@ -109,7 +109,14 @@ class Idle:
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)%2
         #위치가 origin이랑 다르면 돌아오게 하기
         if self.boy.x != self.boy.origin_x or self.boy.y != self.boy.origin_y:
-            pass
+            if self.t < 1.0:
+                # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.boy.y = (1.0 - self.t) * self.boy.start_y + self.t * (self.boy.origin_y)
+                self.boy.x = (1.0 - self.t) * self.boy.start_x + self.t * (self.boy.origin_x)
+            else:
+                self.boy.y = self.boy.start_y = self.boy.origin_y
+                self.t = 0.0
         #돌아오면 idle 이미지 출력
         else:
             sx, sy = sprite_size['IDle'][0]
@@ -128,20 +135,38 @@ class Idle:
                                      self.boy.output_size_w, self.boy.output_size_h)
 
 
-class Defense:
+class Guard:
     def __init__(self, boy):
+        self.boy = boy
+        self.t = 0
+        self.distance = math.sqrt((self.boy.x - 1280) ** 2 + (self.boy.y - 1024) ** 2)
         pass
 
     def enter(self, e):
+        self.boy.up_state = True
+        sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
+        ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+        self.boy.dir = 1
         pass
 
     def exit(self, e):
         pass
 
     def do(self):
+        self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+        if self.t < 1.0:
+            #self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+            self.boy.y = (1.0 - self.t) * self.boy.start_y + self.t * (self.boy.origin_y + self.boy.dir * 50)
+        else:
+            self.boy.y = self.boy.start_y = self.boy.origin_y + self.boy.dir * 50
+            self.t = 0.0
         pass
 
     def draw(self):
+        self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                 self.boy.x, self.boy.y,
+                                 self.boy.output_size_w, self.boy.output_size_h)
         pass
 
 
@@ -265,28 +290,24 @@ class Attack:
                                          self.boy.x,self.boy.y, self.boy.output_size_w, self.boy.output_size_h)
 
 
-
-
-
 class Boy:
     def __init__(self):
 
-        self.hp = 10
-
         self.font = load_font('ENCR10B.TTF', 16)
 
-        self.x, self.y = self.origin_x, self.origin_y = 400, 100
-        self.frame = 0
+        self.hp = 10
+        self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 100
         self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
-        self.image = load_image('./image/Little_Mac.png')
+        self.up_state = False
 
+        self.frame = 0
+        self.image = load_image('./image/Little_Mac.png')
         self.img_h = self.image.h  # 이미지 전체 높이
         self.clip_x = self.clip_y = self.clip_w = self.clip_h = 0
-
         self.output_size_w = self.output_size_h = 0
 
         self.IDLE = Idle(self)
-        self.DEFENSE = Defense(self)
+        self.GUARD = Guard(self)
         self.MOVE = Move(self)
         self.ATTACK = Attack(self)
         self.state_machine = StateMachine(
@@ -294,10 +315,10 @@ class Boy:
             {
                 self.IDLE : {
                     z_down: self.ATTACK, x_down: self.ATTACK,
-                    up_down: self.DEFENSE,
+                    up_down: self.GUARD,
                     down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
                 },
-                self.DEFENSE: {
+                self.GUARD: {
                     up_up: self.IDLE
                 },
                 self.MOVE : {
