@@ -8,10 +8,8 @@ import result_mode
 from state_bar import State_bar
 from boy import Boy
 from rings import Rings
+import common
 from enemy import Enemy
-
-boy = None
-enemy = None
 
 start_time = 0.0
 
@@ -28,11 +26,9 @@ def handle_events():
             game_framework.save_record_to_file(record)
             game_framework.change_mode(result_mode)
         else:
-            boy.handle_event(event)
+            common.boy.handle_event(event)
 
 def init():
-    global boy
-    global enemy
     global state_bar
     global start_time
     #global balls
@@ -42,16 +38,16 @@ def init():
     game_world.add_object(rings, 0)
     #game_world.add_collision_pair('grass:ball', rings, None)
 
-    boy = Boy()
-    game_world.add_object(boy, 2)
+    common.boy = Boy()
+    game_world.add_object(common.boy, 2)
 
-    enemy = Enemy()
-    game_world.add_object(enemy, 1)
+    common.enemy = Enemy()
+    game_world.add_object(common.enemy, 1)
 
     state_bar = State_bar()
     game_world.add_object(state_bar, 3)
 
-    game_world.add_collision_pair('boy:enemy', boy, None)
+    game_world.add_collision_pair('boy:enemy', common.boy, None)
 
     start_time = get_time()
 
