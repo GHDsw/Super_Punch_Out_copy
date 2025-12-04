@@ -5,6 +5,7 @@ import game_world
 
 from pico2d import *
 from state_machine import StateMachine
+from behavior_tree import BehaviorTree, Action, Sequence, Condition, Selector
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 event_end = lambda e: e[0] == 'EVENT_END'
@@ -13,16 +14,19 @@ event_hit = lambda e: e[0] == 'EVENT_HIT'
 event_attack = lambda e: e[0] == 'EVENT_ATTACK'
 
 # zombie Run Speed
-PIXEL_PER_METER = (10.0 / 0.3)  # 10 pixel 30 cm
-RUN_SPEED_KMPH = 10.0  # Km / Hour
-RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
-RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
-RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
+PIXEL_PER_METER = (100.0 / 0.1)  # 10 pixel 1 cm
+MOVE_SPEED_KMPH = 20.0  # Km / Hour
+MOVE_SPEED_MPM = (MOVE_SPEED_KMPH * 1000.0 / 60.0)
+MOVE_SPEED_MPS = (MOVE_SPEED_MPM / 60.0)
+MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 
 # zombie Action Speed
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 10.0
+NOR_PER_ACTION = 2
+SPE_PER_ACTION = 3
+GIMMIK_PER_ACTION = 6
+OUT_PER_ACTION = 12
 
 sprite_size = {
     #임시 이미지
@@ -52,139 +56,40 @@ sprite_size = {
     '1': [[0, 0], [0, 0]], '2': [[0, 0], [0, 0]], '3': [[0, 0], [0, 0]], '4': [[0, 0], [0, 0]], '5': [[0, 0], [0, 0]]
 }
 
-class Idle:
-    def __init__(self, enemy):
-        self.enemy = enemy
-
-    def enter(self, e):
-        sx, sy = sprite_size['Idle'][0]
-        ex, ey = sprite_size['Idle'][1]
-
-        self.enemy.clip_x = sx
-        self.enemy.clip_y = self.enemy.image.h - ey - 1  # top-based y -> bottom-based y 변환
-        self.enemy.clip_w = ex - sx + 1
-        self.enemy.clip_h = ey - sy + 1
-        pass
-
-    def exit(self):
-        pass
-
-    def do(self):
-        pass
-
-    def draw(self):
-        self.enemy.image.clip_draw(self.enemy.clip_x, self.enemy.clip_y, self.enemy.clip_w, self.enemy.clip_h,
-                                   self.enemy.x,self.enemy.y, self.enemy.clip_w*2, self.enemy.clip_h*2)
-
-
-class Move:
-    def __init__(self, enemy):
-        self.enemy = enemy
-
-    def enter(self):
-        pass
-
-    def exit(self):
-        pass
-
-    def do(self):
-        pass
-
-    def draw(self):
-        pass
-
-
-class Attack:
-    def __init__(self, enemy):
-        self.enemy = enemy
-
-    def enter(self):
-        pass
-
-    def exit(self):
-        pass
-
-    def do(self):
-        pass
-
-    def draw(self):
-        pass
-
-
-class Hit:
-    def __init__(self, enemy):
-        self.enemy = enemy
-
-    def enter(self):
-        pass
-
-    def exit(self):
-        pass
-
-    def do(self):
-        pass
-
-    def draw(self):
-        pass
-
-
 class Enemy:
-    def __init__(self):
 
+    images = None
+
+    def __init__(self):
 
         self.x, self.y = 400, 300
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = random.randint(0, 9)
         self.dir = random.choice([-1,1])
 
-        self.clip_x = 0
-        self.clip_y = 0
-        self.clip_w = 0
-        self.clip_h = 0
+        self.img_h = self.image.h  # 이미지 전체 높이
+        self.clip_x = self.clip_y = self.clip_w = self.clip_h = 0
+        self.output_size_w = self.output_size_h = 0
 
         self.hp = 10
 
-        self.IDLE = Idle(self)
-        self.MOVE = Move(self)
-        self.ATTACK = Attack(self)
-        self.HIT = Hit(self)
-
-        self.state_machine = StateMachine(
-            self.IDLE,
-            {
-                self.IDLE: {time_out: self.IDLE,
-                            },
-                self.MOVE: {event_end: self.IDLE
-                            },
-                self.ATTACK: {event_end: self.IDLE
-                              },
-                self.HIT: {time_out: self.IDLE, event_end: self.IDLE
-                }
-            }
-
-        )
-
+        self.build_behavior_tree()
 
     def get_bb(self):
         return self.x - self.clip_w, self.y - self.clip_h, self.x + self.clip_w, self.y + self.clip_h
 
     def update(self):
-        # self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
-        # self.x += RUN_SPEED_PPS * self.dir * game_framework.frame_time
-        # if self.x > 1600:
-        #     self.dir = -1
-        # elif self.x < 800:
-        #     self.dir = 1
-        # self.x = clamp(800, self.x, 1600)
-        self.state_machine.update()
+        self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % NOR_PER_ACTION
+        self.output_size_w = self.clip_w * 3
+        self.output_size_h = self.clip_h * 3
+        self.bt.run()
         pass
 
 
     def draw(self):
-        self.state_machine.draw()
-        # if self.dir < 0:
-        #     self.image.composite_draw(0, 'h', self.x, self.y, self.size, self.size)
-        draw_rectangle(*self.get_bb())
+        self.boy.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
+                                           0, 'h', self.x, self.y + 120, self.output_size_w,
+                                           self.output_size_h)
         draw_rectangle(*self.get_bb())
         pass
 
@@ -194,12 +99,65 @@ class Enemy:
     def handle_collision(self, group, other):
         if group == 'boy:enemy':
             self.hp -= 10
-    #     if group == 'Enemy:boy' and other.stopped is False:
-    #         if self.attack_cnt == 1:
-    #             game_world.remove_object(self)
-    #         else:
-    #             self.attack_cnt -= 1
-    #             self.size = 100 * self.attack_cnt
-    #             self.y -= 50
-    #     if group == 'boy:Enemy':
-    #         pass
+
+    def Idle(self):
+        self.state = 'Idle'
+        sx, sy = sprite_size['Idle']
+        ex, ey = sprite_size['Idle'][1]
+        self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex,
+                                                                                                     ey)
+        return BehaviorTree.SUCCESS
+
+    def stance_check(self):
+        #스탠스 체크
+        return BehaviorTree.SUCCESS
+
+    def Move(self):
+        self.state = 'Move'
+        sx, sy = sprite_size['Move']
+        ex, ey = sprite_size['Move'][1]
+        self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex,
+                                                                                                     ey)
+        return BehaviorTree.SUCCESS
+
+    def direction_check(self):
+        #이동 방향 체크
+        return BehaviorTree.SUCCESS
+
+    def Attack(self):
+        self.state = 'Atk'
+        sx, sy = sprite_size['Atk']
+        ex, ey = sprite_size['Atk'][1]
+        self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex,
+                                                                                                     ey)
+        return BehaviorTree.SUCCESS
+
+    def Defend(self):
+        self.state = 'Def'
+        sx, sy = sprite_size['Def']
+        ex, ey = sprite_size['Def'][1]
+        self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex,
+                                                                                                     ey)
+        return BehaviorTree.SUCCESS
+
+    def build_behavior_tree(self):
+        # a1 = Action('Set target location', self.set_target_location, 1000, 1000)
+        # a2 = Action('Move to', self.move_to)
+        # root = move_to_target_location = Sequence('Move to target location', a1, a2)
+
+        a_Idle = Action('IDLE', self.Idle)
+        c_stance = Condition('Stance Chk', self.stance_check)
+
+        a_Move = Action('MOVE', self.Move)
+        c_dir = Condition('Direction Chk', self.direction_check)
+
+        a_Atk = Action('ATTACK', self.Attack)
+        #스탠스 체크 활용
+
+        a_Def = Action('DEFEND', self.Defend)
+        #스탠스 체크 활용
+
+
+
+        root =
+        self.bt = BehaviorTree(root)
