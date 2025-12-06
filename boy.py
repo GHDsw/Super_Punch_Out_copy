@@ -101,7 +101,7 @@ class Idle:
     def enter(self, e):
         self.boy.wait_time = get_time()
         self.boy.dir = 0
-        self.boy.up_state = False
+        self.boy.stance = -1  # idle시 하단 자세
 
     def exit(self, e):
         reposition(self.boy)
@@ -142,7 +142,7 @@ class Guard:
         self.boy = boy
 
     def enter(self, e):
-        self.boy.up_state = True
+        self.boy.stance = 1  # guard시 상단 자세
         sx, sy = sprite_size['guard'][0]  # 좌상 (x1, y1)
         ex, ey = sprite_size['guard'][1]  # 우하 (x2, y2)
         self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
@@ -268,7 +268,7 @@ class Attack:
             self.boy.state_machine.handle_state_event(('TIMEOUT', None))
 
     def draw(self):
-        if self.boy.up_state: # up
+        if self.boy.stance == 1: # up
             if self.atk_dir == 1: #right
                 self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                                    0, 'h', self.boy.x, self.boy.y+120, self.boy.output_size_w, self.boy.output_size_h)
@@ -292,7 +292,7 @@ class Boy:
         self.hp = 10
         self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 100
         self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
-        self.up_state = False
+        self.stance = -1  # 1: 상단, -1: 하단
 
         self.frame = 0
         self.t = 0.0
@@ -343,7 +343,6 @@ class Boy:
         self.state_machine.draw()
         self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
         draw_rectangle(*self.get_bb())
-        print(self.up_state)
 
     def get_bb(self):
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현
