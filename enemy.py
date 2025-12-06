@@ -22,7 +22,7 @@ MOVE_SPEED_MPS = (MOVE_SPEED_MPM / 60.0)
 MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 
 # zombie Action Speed
-TIME_PER_ACTION = 0.5
+TIME_PER_ACTION = 2
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 NOR_PER_ACTION = 2
 ONE_PER_ACTION = 1
@@ -32,7 +32,7 @@ OUT_PER_ACTION = 12
 
 sprite = {
     #'상태_스탠스_프레임': [[시작x, 시작y], [끝x, 끝y]]
-    'Idle_-1_1': [[0, 0], [69, 168]], 'Idle_-1_2': [[70, 0], [132, 168]], 'Idle_1_1': [[133, 0], [212, 168]], 'Idle_1_2': [[134, 0], [277, 168]], 'Move_1': [[315, 0], [383, 168]], 'Move_2': [[384, 0],[453, 168]],
+    'Idle_-1_1': [[0, 0], [69, 168]], 'Idle_-1_2': [[70, 0], [132, 168]], 'Idle_1_1': [[133, 0], [212, 168]], 'Idle_1_2': [[134, 0], [277, 168]], 'Move_0_1': [[315, 0], [383, 168]], 'Move_0_2': [[384, 0],[453, 168]],
 
     'Def_1_1': [[0, 169], [70, 345]], 'Def_-1_1': [[71, 169], [135, 345]],
 
@@ -68,6 +68,7 @@ class Enemy:
         self.state = 'Idle'
 
         self.image = load_image('./image/Gabby_Jay.png')
+        self.sprite_idx = 'Idle_-1_1'
         self.frame = random.randint(0, 9)
         self.frame_per_action = NOR_PER_ACTION
 
@@ -82,6 +83,7 @@ class Enemy:
 
     def update(self):
         self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % self.frame_per_action
+        self.sprite_index = f'{self.state}_{self.stance}_{int(self.frame) + 1}'
         self.output_size_w = self.clip_w * 3
         self.output_size_h = self.clip_h * 3
         self.bt.run()
@@ -89,9 +91,8 @@ class Enemy:
 
 
     def draw(self):
-        sprite_index = f'{self.state}_{self.stance}_{int(self.frame)+1}'
-        sx, sy = sprite[sprite_index][0]
-        ex, ey = sprite[sprite_index][1]
+        sx, sy = sprite[self.sprite_index][0]
+        ex, ey = sprite[self.sprite_index][1]
         self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex, ey)
 
         self.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
@@ -108,6 +109,9 @@ class Enemy:
         if group == 'boy:enemy':
             self.hp -= 10
 
+    def frame_reset(self):
+        self.frame = 0
+
     def stance_dir_set(self):
         self.stance = random.choice([1, -1])
         self.dir = random.choice([1, -1])
@@ -117,32 +121,54 @@ class Enemy:
     def Idle(self):
         self.state = 'Idle'
         self.frame_per_action = NOR_PER_ACTION
-        return BehaviorTree.SUCCESS
+        if int(self.frame) == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def Move(self):
+        self.frame_per_action = NOR_PER_ACTION
         self.state = 'Move'
-        return BehaviorTree.SUCCESS
+        self.stance = 0
+        if int(self.frame) == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def Attack(self):
         self.state = 'Atk'
-        self.frame_per_action = ATK_PER_ACTION
-        return BehaviorTree.SUCCESS
+        if self.stance == -1:
+            self.frame_per_action = ATK_PER_ACTION
+        if int(self.frame) == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def Stun(self):
         #기절 상태
         self.state = 'Stun'
         self.stance = 0
         self.frame_per_action = NOR_PER_ACTION
-        return BehaviorTree.SUCCESS
+        if self.frame == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def Defend(self):
         self.state = 'Def'
-        return BehaviorTree.SUCCESS
+        self.frame_per_action = ONE_PER_ACTION
+        if self.frame == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def Hit(self):
-        self.state = 'Hit'
         self.frame_per_action = ONE_PER_ACTION
-        return BehaviorTree.SUCCESS
+        self.state = 'Hit'
+        if self.frame == self.frame_per_action - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
 
     def move_chk(self):
         #이동 중 피격
@@ -187,6 +213,7 @@ class Enemy:
         # 피격 판정
         # 1순위:회피 2순위:공격 도중 피격 3순위:방어 성공 4순위:피격
 
+        a_frame_reset = Action('Frame reset', self.frame_reset)
         a_stance_dir_set = Action('Set stance and direction', self.stance_dir_set)
         a_Idle = Action('IDLE', self.Idle)
         a_Move = Action('MOVE', self.Move)
@@ -200,15 +227,21 @@ class Enemy:
         c_move_chk = Condition('move chk', self.move_chk)
         c_stance_chk = Condition('stance chk', self.stance_check)
         c_atk_ing_chk = Condition('atk ing chk', self.atk_ing_chk)
+        c_boy_atk_chk = Condition('boy atk chk', self.boy_atk_chk)
 
         root = stun_chk = Sequence('Stun chk', c_atk_ing_chk ,a_Stun)
         root = def_chk = Sequence('Def chk', c_stance_chk, a_Def)
 
-        root = Idle = Sequence('Idle', a_stance_dir_set, a_Atk, a_Move,a_Idle)
+        root = Idle = Sequence('Idle', a_frame_reset, a_Idle)
+        root = Move = Sequence('Move', a_frame_reset, a_Move)
+        root = Atk = Sequence('Atk', a_frame_reset,a_Atk)
+        root = Non_Hit = Sequence('Non_Hit', a_stance_dir_set, Idle, Atk, Move)
+
         root = Hit = Selector('Hit', c_move_chk, stun_chk, def_chk, a_Hit)
-        c_boy_atk_chk = Condition('boy atk chk', self.boy_atk_chk)
         root = Hit_chk = Sequence('Hit chk', c_boy_atk_chk, Hit)
 
-        root = Selector('Enemy Behavior', Hit_chk, Idle)
+        root = Hit_or_Non_Hit = Selector('Hit or Non_Hit', Hit_chk, Non_Hit)
+
+        root = Sequence('Enemy BT', a_frame_reset, Hit_or_Non_Hit)
 
         self.bt = BehaviorTree(root)
