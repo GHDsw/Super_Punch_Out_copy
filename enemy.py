@@ -22,7 +22,7 @@ MOVE_SPEED_MPS = (MOVE_SPEED_MPM / 60.0)
 MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 
 # zombie Action Speed
-TIME_PER_ACTION = 4
+TIME_PER_ACTION = 4.0
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 4.0
 GIMMIK_PER_ACTION = 6
@@ -34,7 +34,7 @@ sprite = {
 
     'Def_1': [[0, 169], [70, 345]], 'Def_-1': [[71, 169], [135, 345]],
 
-    'Atk_1_1': [[0, 170], [75, 527]], 'Atk_1_2': [[76, 170]],
+    'Atk_1_1': [[0, 346], [75, 527]], 'Atk_1_2': [[76, 346],[146, 527]],
 
     'Atk_-1_1': [[0, 528], [71, 702]], 'Atk_-1_2': [[72, 528], [154, 702]], 'Atk_-1_3': [[155, 528], [253, 702]],
 
@@ -44,11 +44,11 @@ sprite = {
 
     '1': [[0, 1044], [73, 1236]], '2': [[74, 1044], [159, 1236]],
 
-    'Stun_1': [[0, 1045], [73, 1393]], 'Stun_2': [[0, 1045], [152, 1393]],
+    'Stun_1': [[0, 1237], [73, 1393]], 'Stun_2': [[74, 1237], [152, 1393]],
 
     '1': [[0, 1394], [65, 1569]], '2': [[66, 1394], [137, 1569]], '3': [[138, 1394], [231, 1569]], '4': [[232, 1394], [311, 1569]], '5': [[312, 1394], [402, 1569]], '6': [[403, 1394], [467, 1569]],
 
-    'Hit_1': [[0, 1570], [59, 1762]], 'Hit_-1': [[60, 1570], [146, 1762]], '3': [[147, 1570], [225, 1762]], '4': [[226, 1570], [330, 1762]], '5': [[331, 1570], [405, 1762]], '6': [[406, 1570], [501, 1762]],
+    'Stun_Hit': [[0, 1570], [59, 1762]], 'Hit_-1': [[60, 1570], [146, 1762]], 'Hit_1': [[147, 1570], [225, 1762]], '4': [[226, 1570], [330, 1762]], '5': [[331, 1570], [405, 1762]], '6': [[406, 1570], [501, 1762]],
 
     '1': [[0, 1763], [102, 1944]], '2': [[103, 1763], [203, 1944]], '3': [[204, 1763], [306, 1944]], '4': [[307, 1763], [384, 1944]], '5': [[385, 1763], [450, 1944]],
 }
@@ -63,6 +63,10 @@ class Enemy:
         self.dir = 0 # 1: 오른쪽, -1:왼쪽
         self.hp = 10
         self.stance = -1  # 1: 상단, -1: 하단
+        self.is_stunned = False
+        self.stun_time = None
+
+        self.prev_state = None
         self.state = 'Idle'
 
         self.image = load_image('./image/Gabby_Jay.png')
@@ -86,6 +90,7 @@ class Enemy:
         print(self.state)
         print(self.stance)
         print(self.dir)
+        print(self.is_stunned)
         pass
 
 
@@ -110,27 +115,30 @@ class Enemy:
         if group == 'boy:enemy':
             self.hp -= 10
 
-    def frame_reset(self):
-        self.frame = 0
-        return BehaviorTree.SUCCESS
-
     def stance_dir_set(self):
         self.stance = random.choice([1, -1])
         self.dir = random.choice([1, -1])
         return BehaviorTree.SUCCESS
 
     def Idle(self):
+        if self.prev_state != 'Idle':
+            self.frame = 0.0
+            self.prev_state = 'Idle'
         self.state = 'Idle'
         if self.frame < 2:
             self.sprite_index = f'Idle_{self.stance}_1'
         else:
             self.sprite_index = f'Idle_{self.stance}_2'
-        if int(self.frame) == FRAMES_PER_ACTION-1:
-            return BehaviorTree.SUCCESS
-        else:
+        if self.frame < FRAMES_PER_ACTION - 1.0:
             return BehaviorTree.RUNNING
+        else:
+            return BehaviorTree.SUCCESS
+
 
     def Move(self):
+        if self.prev_state != 'Move':
+            self.frame = 0.0
+            self.prev_state = 'Move'
         self.state = 'Move'
         if self.frame < 2:
             self.sprite_index = f'Move_1'
@@ -142,40 +150,54 @@ class Enemy:
             return BehaviorTree.RUNNING
 
     def Attack(self):
+        if self.prev_state != 'Atk':
+            self.frame = 0.0
+            self.prev_state = 'Atk'
         self.state = 'Atk'
-        if self.stance == -1:
-            pass
+        if self.frame < 1:
+            self.sprite_index = f'Atk_{self.stance}_1'
+        elif self.stance == -1 and self.frame >= 2:
+            self.sprite_index = f'Atk_{self.stance}_3'
         else:
-            pass
+            self.sprite_index = f'Atk_{self.stance}_2'
         if int(self.frame) == FRAMES_PER_ACTION-1:
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING
 
     def Stun(self):
-        #기절 상태
+        if self.prev_state != 'Stun':
+            self.frame = 0.0
+            self.prev_state = 'Stun'
         self.state = 'Stun'
-        if self.frame < 2:
+        if self.frame == self.frame % 2:
             self.sprite_index = f'Stun_1'
         else:
             self.sprite_index = f'Stun_2'
-        if int(self.frame) == FRAMES_PER_ACTION:
+        if get_time() - self.stun_time > 5.0:
+            self.is_stunned = False
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING
 
     def Defend(self):
+        if self.prev_state != 'Def':
+            self.frame = 0.0
+            self.prev_state = 'Def'
         self.state = 'Def'
         self.sprite_index = f'Def_{self.stance}'
-        if int(self.frame) == FRAMES_PER_ACTION:
+        if int(self.frame) == FRAMES_PER_ACTION - 1:
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING
 
     def Hit(self):
+        if self.prev_state != 'Hit':
+            self.frame = 0.0
+            self.prev_state = 'Hit'
         self.state = 'Hit'
         self.sprite_index = f'Hit_{-1*self.stance}'
-        if int(self.frame) == FRAMES_PER_ACTION:
+        if int(self.frame) == FRAMES_PER_ACTION - 1:
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING
@@ -189,10 +211,20 @@ class Enemy:
 
     def atk_ing_chk(self):
         #공격 도중 피격
-        if self.state == 'Atk':
+        if self.state == 'Atk' and common.boy.atk == True:
+            self.is_stunned = True
+            self.stun_time = get_time()
+            if self.prev_state != 'stun_hit':
+                self.frame = 0.0
+                self.prev_state = 'stun_hit'
+            self.state = 'stun_hit'
+            self.sprite_index = f'Stun_Hit'
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.FAIL
+
+    def stunned_check(self):
+        return BehaviorTree.SUCCESS if self.is_stunned else BehaviorTree.FAIL
 
     def stance_check(self):
         #boy의 dir 확인
@@ -212,46 +244,31 @@ class Enemy:
 
 
     def build_behavior_tree(self):
-        # a1 = Action('Set target location', self.set_target_location, 1000, 1000)
-        # a2 = Action('Move to', self.move_to)
-        # root = move_to_target_location = Sequence('Move to target location', a1, a2)
-
-        #굳이 스탠스를 따로 뺄 필요가 있을까?
-        #디렉션도 마찬가지
-        #행동 트리 구성
-        # Idle, Move, Atk, Defend, Hit, Stun
-        # 피격 판정
-        # 1순위:회피 2순위:공격 도중 피격 3순위:방어 성공 4순위:피격
-
-        a_frame_reset = Action('Frame reset', self.frame_reset)
         a_stance_dir_set = Action('Set stance and direction', self.stance_dir_set)
-        a_Idle = Action('IDLE', self.Idle)
-        a_Move = Action('MOVE', self.Move)
-        a_Atk = Action('ATTACK', self.Attack)
+        a_Idle = Action('a_IDLE', self.Idle)
+        a_Move = Action('a_MOVE', self.Move)
+        a_Atk = Action('a_ATTACK', self.Attack)
         #스탠스 활용
 
-        a_Def = Action('DEFEND', self.Defend)
-        a_Hit = Action('HIT', self.Hit)
-        a_Stun = Action('STUN', self.Stun)
-        #boy의 dir 확인으로 방어 성공 여부 판단
-        c_move_chk = Condition('move chk', self.move_chk)
-        c_stance_chk = Condition('stance chk', self.stance_check)
-        c_atk_ing_chk = Condition('atk ing chk', self.atk_ing_chk)
-        c_boy_atk_chk = Condition('boy atk chk', self.boy_atk_chk)
+        a_Def = Action('a_DEFEND', self.Defend)
+        a_Hit = Action('a_HIT', self.Hit)
+        a_Stun = Action('a_STUN', self.Stun)
 
-        root = stun_chk = Sequence('Stun chk', c_atk_ing_chk ,a_Stun)
+        a_move_chk = Action('move chk', self.move_chk)
+
+        c_stance_chk = Condition('stance chk', self.stance_check)
+        a_atk_ing_chk = Action('atk ing chk', self.atk_ing_chk)
+        c_boy_atk_chk = Condition('boy atk chk', self.boy_atk_chk)
+        c_is_stunned = Condition('is stunned', self.stunned_check)
+
+        root = stun_chk = Sequence('Stun chk', c_is_stunned, a_Stun)
         root = def_chk = Sequence('Def chk', c_stance_chk, a_Def)
 
-        root = Idle = Sequence('Idle', a_frame_reset, a_Idle)
-        root = Move = Sequence('Move', a_frame_reset, a_Move)
-        root = Atk = Sequence('Atk', a_frame_reset,a_Atk)
-        root = Non_Hit = Sequence('Non_Hit', a_stance_dir_set, Idle, Atk, Move)
+        root = Non_Hit = Sequence('Non_Hit', a_stance_dir_set, a_Idle, a_Move, a_Atk)
 
-        root = Hit = Selector('Hit', c_move_chk, stun_chk, def_chk, a_Hit)
+        root = Hit = Selector('Hit', a_move_chk, a_atk_ing_chk, def_chk, a_Hit)
         root = Hit_chk = Sequence('Hit chk', c_boy_atk_chk, Hit)
 
-        root = Hit_or_Non_Hit = Selector('Hit or Non_Hit', Hit_chk, Non_Hit)
-
-        root = Sequence('Enemy BT', a_frame_reset, Hit_or_Non_Hit)
+        root = Selector('Enemy BT', stun_chk, Hit_chk, Non_Hit)
 
         self.bt = BehaviorTree(root)
