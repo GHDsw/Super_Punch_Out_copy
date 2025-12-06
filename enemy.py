@@ -25,19 +25,20 @@ MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 NOR_PER_ACTION = 2
-SPE_PER_ACTION = 3
+ONE_PER_ACTION = 1
+ATK_PER_ACTION = 4
 GIMMIK_PER_ACTION = 6
 OUT_PER_ACTION = 12
 
-sprite_size = {
+sprite = {
     #'상태_스탠스_프레임': [[시작x, 시작y], [끝x, 끝y]]
     'Idle_-1_1': [[0, 0], [69, 168]], 'Idle_-1_2': [[70, 0], [132, 168]], 'Idle_1_1': [[133, 0], [212, 168]], 'Idle_1_2': [[134, 0], [277, 168]], 'Move_1': [[315, 0], [383, 168]], 'Move_2': [[384, 0],[453, 168]],
 
-    'Def_1': [[0, 169], [70, 345]], 'Def_-1': [[71, 169], [135, 345]],
+    'Def_1_1': [[0, 169], [70, 345]], 'Def_-1_1': [[71, 169], [135, 345]],
 
-    'Atk_1_1': [[0, 170], [75, 527]], 'Atk_1_2': [[76, 170], [146, 527]],
+    'Atk_1_1': [[0, 170], [75, 527]], 'Atk_1_2': [[0, 170], [75, 527]], 'Atk_1_3': [[76, 170], [146, 527]], 'Atk_1_4': [[76, 170], [146, 527]],
 
-    'Atk_-1_1': [[0, 528], [71, 702]], 'Atk_-1_2': [[72, 528], [154, 702]], 'Atk_-1_3': [[155, 528], [253, 702]],
+    'Atk_-1_1': [[0, 528], [71, 702]], 'Atk_-1_2': [[0, 528], [71, 702]], 'Atk_-1_3': [[72, 528], [154, 702]], 'Atk_-1_4': [[155, 528], [253, 702]],
 
     '1': [[0, 703], [58, 866]], '2': [[59, 703], [145, 866]], '3': [[146, 703], [252, 866]],
 
@@ -45,11 +46,11 @@ sprite_size = {
 
     '1': [[0, 1044], [73, 1236]], '2': [[74, 1044], [159, 1236]],
 
-    'Stun_1': [[0, 1045], [73, 1393]], 'Stun_2': [[0, 1045], [152, 1393]],
+    'Stun_0_1': [[0, 1045], [73, 1393]], 'Stun_0_2': [[0, 1045], [152, 1393]],
 
     '1': [[0, 1394], [65, 1569]], '2': [[66, 1394], [137, 1569]], '3': [[138, 1394], [231, 1569]], '4': [[232, 1394], [311, 1569]], '5': [[312, 1394], [402, 1569]], '6': [[403, 1394], [467, 1569]],
 
-    'Hit_1': [[0, 1570], [59, 1762]], 'Hit_-1': [[60, 1570], [146, 1762]], '3': [[147, 1570], [225, 1762]], '4': [[226, 1570], [330, 1762]], '5': [[331, 1570], [405, 1762]], '6': [[406, 1570], [501, 1762]],
+    'Hit_1_1': [[0, 1570], [59, 1762]], 'Hit_-1_1': [[60, 1570], [146, 1762]], '3': [[147, 1570], [225, 1762]], '4': [[226, 1570], [330, 1762]], '5': [[331, 1570], [405, 1762]], '6': [[406, 1570], [501, 1762]],
 
     '1': [[0, 1763], [102, 1944]], '2': [[103, 1763], [203, 1944]], '3': [[204, 1763], [306, 1944]], '4': [[307, 1763], [384, 1944]], '5': [[385, 1763], [450, 1944]],
 }
@@ -68,6 +69,7 @@ class Enemy:
 
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = random.randint(0, 9)
+        self.frame_per_action = NOR_PER_ACTION
 
         self.img_h = self.image.h  # 이미지 전체 높이
         self.clip_x = self.clip_y = self.clip_w = self.clip_h = 0
@@ -79,7 +81,7 @@ class Enemy:
         return self.x - self.clip_w, self.y - self.clip_h, self.x + self.clip_w, self.y + self.clip_h
 
     def update(self):
-        self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % NOR_PER_ACTION
+        self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % self.frame_per_action
         self.output_size_w = self.clip_w * 3
         self.output_size_h = self.clip_h * 3
         self.bt.run()
@@ -87,7 +89,10 @@ class Enemy:
 
 
     def draw(self):
-
+        sprite_index = f'{self.state}_{self.stance}_{int(self.frame)+1}'
+        sx, sy = sprite[sprite_index][0]
+        ex, ey = sprite[sprite_index][1]
+        self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex, ey)
 
         self.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
                                        0, 'h',
@@ -106,10 +111,12 @@ class Enemy:
     def stance_dir_set(self):
         self.stance = random.choice([1, -1])
         self.dir = random.choice([1, -1])
+        self.frame_per_action = NOR_PER_ACTION
         return BehaviorTree.SUCCESS
 
     def Idle(self):
         self.state = 'Idle'
+        self.frame_per_action = NOR_PER_ACTION
         return BehaviorTree.SUCCESS
 
     def Move(self):
@@ -118,11 +125,14 @@ class Enemy:
 
     def Attack(self):
         self.state = 'Atk'
+        self.frame_per_action = ATK_PER_ACTION
         return BehaviorTree.SUCCESS
 
     def Stun(self):
         #기절 상태
         self.state = 'Stun'
+        self.stance = 0
+        self.frame_per_action = NOR_PER_ACTION
         return BehaviorTree.SUCCESS
 
     def Defend(self):
@@ -131,6 +141,7 @@ class Enemy:
 
     def Hit(self):
         self.state = 'Hit'
+        self.frame_per_action = ONE_PER_ACTION
         return BehaviorTree.SUCCESS
 
     def move_chk(self):
