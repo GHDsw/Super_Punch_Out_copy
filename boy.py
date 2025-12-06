@@ -102,6 +102,7 @@ class Idle:
         self.boy.wait_time = get_time()
         self.boy.dir = 0
         self.boy.stance = -1  # idle시 하단 자세
+        self.boy.atk = False
 
     def exit(self, e):
         reposition(self.boy)
@@ -241,6 +242,7 @@ class Attack:
             self.atk_dir = -1
         if x_down(e):
             self.atk_dir = 1
+        self.boy.atk = True
 
     def exit(self, e):
         pass
@@ -248,7 +250,7 @@ class Attack:
     def do(self):
         self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
 
-        if self.boy.up_state:
+        if self.boy.stance == 1: # up
             if int(self.boy.frame) == 0:
                 sx, sy = sprite_size['HeadAttackReady'][0]
                 ex, ey = sprite_size['HeadAttackReady'][1]
@@ -293,6 +295,7 @@ class Boy:
         self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 100
         self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
         self.stance = -1  # 1: 상단, -1: 하단
+        self.atk = False
 
         self.frame = 0
         self.t = 0.0
