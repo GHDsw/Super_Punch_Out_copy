@@ -39,13 +39,13 @@ def init():
     #game_world.add_collision_pair('grass:ball', rings, None)
 
     common.boy = Boy()
-    game_world.add_object(common.boy, 2)
+    game_world.add_object(common.boy, 3)
 
     common.enemy = Enemy()
-    game_world.add_object(common.enemy, 1)
+    game_world.add_object(common.enemy, 2)
 
     state_bar = State_bar()
-    game_world.add_object(state_bar, 3)
+    game_world.add_object(state_bar, 1)
 
     game_world.add_collision_pair('boy:enemy', common.boy, None)
 
