@@ -87,7 +87,7 @@ def init():
     global image, font, lines
     image = load_image('./image/Intro,Menu.png')
     try:
-        font = load_font('ENCR10B.TTF', 16)
+        font = load_font('ENCR10B.TTF', 32)
     except:
         font = None
     try:

@@ -55,7 +55,7 @@ def update():
     game_world.handle_collision()
 
     if common.boy.WIN.end:
-        record = get_time() - start_time
+        record = (common.boy.hp//2 + 36000 // int(get_time() - start_time))*10
         game_framework.save_record_to_file(record)
         game_framework.change_mode(result_mode)
 

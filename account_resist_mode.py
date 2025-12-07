@@ -52,7 +52,7 @@ def init():
     global alp_image, font, arrow_col, arrow_row, selected
     alp_image = load_image('./image/Intro,Menu.png')
     try:
-        font = load_font('ENCR10B.TTF', 16)
+        font = load_font('ENCR10B.TTF', 32)
     except:
         font = None
     arrow_col = 0
@@ -137,7 +137,7 @@ def draw():
     alp_image.clip_draw(a_clip_x, a_clip_y, a_clip_w, a_clip_h, arrow_x, arrow_y, a_clip_w * scale_img, a_clip_h * scale_img)
 
     # 선택된 글자 표시 (상단 중앙)
-    display_y = 560
+    display_y = 530
     selected_str = ''.join(selected)
     if font:
         total_width = len(selected_str) * 24
