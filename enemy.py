@@ -139,7 +139,7 @@ class Enemy:
                                            0, 'h',
                                            self.x, self.y + 120,
                                            self.output_size_w, self.output_size_h)
-        draw_rectangle(*self.get_bb())
+        # draw_rectangle(*self.get_bb())
         pass
 
     def handle_event(self, event):
@@ -263,7 +263,7 @@ class Enemy:
                 self.y = (1.0 - self.t) * self.start_y + self.t * (self.knockdown_y)
                 if self.frame == 0:
                     self.sprite_index = f'knockdown_2'
-                else:
+                if self.t % 0.2 <= 0.01:
                     self.dir = -1 * self.dir
             else:
                 self.y = self.start_y = self.knockdown_y

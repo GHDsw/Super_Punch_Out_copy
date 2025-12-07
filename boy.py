@@ -455,8 +455,8 @@ class Boy:
 
     def draw(self):
         self.state_machine.draw()
-        self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
-        draw_rectangle(*self.get_bb())
+        # self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
+        # draw_rectangle(*self.get_bb())
 
     def get_bb(self):
         #self.state_machine.get_bb() < 상태에 따라 다르게 충돌 상자 설정하려면 여기서 구현

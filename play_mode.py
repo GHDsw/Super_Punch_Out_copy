@@ -19,7 +19,7 @@ def handle_events():
     global start_time
     event_list = get_events()
     for event in event_list:
-        if event.type == SDL_KEYDOWN and event.key == SDLK_SPACE:
+        if event.type == SDL_KEYDOWN and event.key == SDLK_o:
             common.enemy.hp = 0
         if event.type == SDL_KEYDOWN and event.key == SDLK_p:
             common.boy.hp = 0
