@@ -14,6 +14,8 @@ from enemy import Enemy
 
 start_time = 0.0
 
+bgm = None
+
 def handle_events():
     global start_time
     event_list = get_events()
@@ -31,7 +33,11 @@ def handle_events():
 
 def init():
     global state_bar
-    global start_time
+    global start_time, bgm
+
+    bgm = load_music('./audio/Battle.wav')
+    bgm.set_volume(32)
+    bgm.repeat_play()
 
     rings = Rings()
     game_world.add_object(rings, 0)

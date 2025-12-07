@@ -18,6 +18,7 @@ frame_ring = 0
 frame_logo = 0
 
 image = None
+bgm = None
 
 def pause():
     pass
@@ -26,9 +27,11 @@ def resume():
     pass
 
 def init():
-    global image
+    global image, bgm
 
     image = load_image('./image/Intro,Menu.png')
+    bgm = load_music('./audio/Title.wav')
+    bgm.set_volume(32)
 
 def finish():
     global image
@@ -37,8 +40,8 @@ def finish():
 def update():
     # 로고 모드 2초간 지속
     global intro_start_time
-    if get_time() - title_start_time > 30.0:
-        game_framework.change_mode(account_resist_mode)
+    # if get_time() - title_start_time > 30.0:
+    #     game_framework.change_mode(account_resist_mode)
 
     global frame_ring
     frame_ring = (frame_ring + FRAMES_PER_ACTION_ring * ACTION_PER_TIME * game_framework.frame_time) % 4

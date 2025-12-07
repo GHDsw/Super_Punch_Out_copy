@@ -16,6 +16,7 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 22
 
 image = None
+bgm = None
 frame = 0
 
 font = None
@@ -84,8 +85,10 @@ def _load_sorted_and_trim_records(path, max_entries=10):
 
 
 def init():
-    global image, font, lines
+    global image, font, lines, bgm
     image = load_image('./image/Intro,Menu.png')
+    bgm = load_music('./audio/Clear.wav')
+    bgm.set_volume(32)
     try:
         font = load_font('ENCR10B.TTF', 32)
     except:

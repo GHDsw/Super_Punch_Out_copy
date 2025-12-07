@@ -33,6 +33,7 @@ FRAMES_PER_ACTION = 22
 
 alp_image = None
 font = None
+bgm = None
 frame = 0
 
 # 커서 상태: column(0..TOTAL_COLS-1), row(0..ROWS-1) where 0 is 맨 위
@@ -49,8 +50,11 @@ def resume():
     pass
 
 def init():
-    global alp_image, font, arrow_col, arrow_row, selected
+    global alp_image, font, arrow_col, arrow_row, selected, bgm
     alp_image = load_image('./image/Intro,Menu.png')
+    bgm = load_music('./audio/Menu.wav')
+    bgm.set_volume(32)
+    bgm.repeat_play()
     try:
         font = load_font('ENCR10B.TTF', 32)
     except:

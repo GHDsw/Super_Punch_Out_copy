@@ -6,10 +6,11 @@ import title_mode
 sprite_size = {'intro': [[20, 356], [275, 579]],
                }
 
-TIME_PER_ACTION = 10
+TIME_PER_ACTION = 25
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 22
 
+bgm = None
 image = None
 frame = 0
 
@@ -20,9 +21,12 @@ def resume():
     pass
 
 def init():
-    global image, intro_start_time
+    global image, intro_start_time, bgm
 
     image = load_image('./image/Intro,Menu.png')
+    bgm = load_music('./audio/intro.wav')
+    bgm.set_volume(32)
+    bgm.repeat_play()
 
 
 def finish():
@@ -33,7 +37,7 @@ def update():
     global frame
     global ACTION_PER_TIME
     if frame > 6:
-        ACTION_PER_TIME = 1.0 / TIME_PER_ACTION * 10
+        ACTION_PER_TIME = 1.0 / TIME_PER_ACTION * 5
     else:
         ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 
