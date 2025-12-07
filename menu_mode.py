@@ -1,8 +1,6 @@
 # python
 import game_framework
 from pico2d import *
-import os
-import string
 
 import play_mode
 import train_mode

@@ -4,8 +4,6 @@ import common
 
 import math
 
-import game_world
-
 sprite_size = {'ring1': [[0, 0], [431, 175]],
                'ring2': [[0, 256], [431, 431]],
                'ring3': [[0, 512], [431, 687]],

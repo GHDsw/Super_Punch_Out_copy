@@ -1,8 +1,6 @@
 # python
-import os
 import game_framework
 from pico2d import *
-import re
 
 import intro_mode
 

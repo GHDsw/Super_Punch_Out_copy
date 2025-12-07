@@ -3,7 +3,6 @@ from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK
 import math
 import common
 
-import game_world
 import game_framework
 from game_framework import carculate_image_position
 

@@ -1,8 +1,5 @@
 from pico2d import *
-#load_image, get_time, load_font
-import math
 
-import game_world
 import game_framework
 import common
 

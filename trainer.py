@@ -1,10 +1,7 @@
 import random
-import math
 import game_framework
-import game_world
 
 from pico2d import *
-from state_machine import StateMachine
 from behavior_tree import BehaviorTree, Action, Sequence, Condition, Selector
 import common
 
