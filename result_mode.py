@@ -89,6 +89,7 @@ def init():
     image = load_image('./image/Intro,Menu.png')
     bgm = load_music('./audio/Clear.wav')
     bgm.set_volume(32)
+    bgm.play()
     try:
         font = load_font('ENCR10B.TTF', 32)
     except:

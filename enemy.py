@@ -4,6 +4,8 @@ import game_framework
 import game_world
 
 from pico2d import *
+
+from common import enemy
 from state_machine import StateMachine
 from behavior_tree import BehaviorTree, Action, Sequence, Condition, Selector
 import common
@@ -56,6 +58,9 @@ sprite = {
 class Enemy:
 
     images = None
+    sound_gj_hit = None
+    sound_gj_stun = None
+    sound_gj_atk = None
 
     def __init__(self):
 
@@ -79,6 +84,17 @@ class Enemy:
         self.dead = False
 
         self.image = load_image('./image/Gabby_Jay.png')
+
+        if not Enemy.sound_gj_hit:
+            Enemy.sound_gj_hit = load_wav('./audio/effect/gj_hit.wav')
+            Enemy.sound_gj_hit.set_volume(32)
+        if not Enemy.sound_gj_stun:
+            Enemy.sound_gj_stun = load_wav('./audio/effect/gj_stun.wav')
+            Enemy.sound_gj_stun.set_volume(32)
+        if not Enemy.sound_gj_atk:
+            Enemy.sound_gj_atk = load_wav('./audio/effect/gj_atk.wav')
+            Enemy.sound_gj_atk.set_volume(32)
+
         self.frame = 0
         self.sprite_index = 'Idle_-1_1'
 
@@ -180,6 +196,7 @@ class Enemy:
         if self.prev_state != 'Atk':
             self.frame = 0.0
             self.prev_state = 'Atk'
+            self.sound_gj_atk.play()
         self.state = 'Atk'
         if self.frame < 1:
             self.sprite_index = f'Atk_{self.stance}_1'
@@ -201,6 +218,7 @@ class Enemy:
         if self.prev_state != 'Stun':
             self.frame = 0.0
             self.prev_state = 'Stun'
+            self.sound_gj_stun.play()
         self.state = 'Stun'
         if self.frame == self.frame % 2:
             self.sprite_index = f'Stun_1'
@@ -216,6 +234,7 @@ class Enemy:
         if self.prev_state != 'Def':
             self.frame = 0.0
             self.prev_state = 'Def'
+            self.sound_gj_atk.play()
         self.state = 'Def'
         self.sprite_index = f'Def_{self.stance}'
         if int(self.frame) == FRAMES_PER_ACTION - 1:
@@ -228,6 +247,7 @@ class Enemy:
             self.frame = 0.0
             self.prev_state = 'Hit'
             self.hp -= 1
+            self.sound_gj_hit.play()
         self.state = 'Hit'
         self.sprite_index = f'Hit_{-1*self.stance}'
         if int(self.frame) == FRAMES_PER_ACTION - 1:

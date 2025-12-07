@@ -32,6 +32,7 @@ def init():
     image = load_image('./image/Intro,Menu.png')
     bgm = load_music('./audio/Title.wav')
     bgm.set_volume(32)
+    bgm.play()
 
 def finish():
     global image
@@ -78,7 +79,7 @@ def draw():
     # 각 프레임은 20 차이
     image.clip_draw(clip_x + clip_w * (int(frame_logo) % 3+1) + gap * (int(frame_logo) % 3+1),
                     clip_y,
-                    clip_w, clip_h, 400, 400)
+                    clip_w, clip_h, 400,300, 800, 600)
     update_canvas()
 
 def handle_events():

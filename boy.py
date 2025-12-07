@@ -321,7 +321,6 @@ class Hit:
     def __init__(self, boy):
         self.boy = boy
         self.enter_time = 0
-
     def enter(self, e):
         self.enter_time = get_time()
         sx, sy = sprite_size['hit'][0]
