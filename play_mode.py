@@ -4,6 +4,7 @@ from pico2d import *
 import game_framework
 import game_world
 import result_mode
+import game_over
 
 from state_bar import State_bar
 from boy import Boy
@@ -19,6 +20,8 @@ def handle_events():
     for event in event_list:
         if event.type == SDL_KEYDOWN and event.key == SDLK_SPACE:
             common.enemy.hp = 0
+        if event.type == SDL_KEYDOWN and event.key == SDLK_p:
+            common.boy.hp = 0
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
@@ -55,6 +58,9 @@ def update():
         record = get_time() - start_time
         game_framework.save_record_to_file(record)
         game_framework.change_mode(result_mode)
+
+    if common.boy.hp <= 0:
+        game_framework.change_mode(game_over)
 
 def draw():
     clear_canvas()

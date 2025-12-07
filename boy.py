@@ -6,7 +6,6 @@ import common
 import game_world
 import game_framework
 from game_framework import carculate_image_position
-import result_mode
 
 from state_machine import StateMachine
 
