@@ -16,7 +16,7 @@ event_attack = lambda e: e[0] == 'EVENT_ATTACK'
 
 # zombie Run Speed
 PIXEL_PER_METER = (100.0 / 0.1)  # 10 pixel 1 cm
-MOVE_SPEED_KMPH = 20.0  # Km / Hour
+MOVE_SPEED_KMPH = 5.0  # Km / Hour
 MOVE_SPEED_MPM = (MOVE_SPEED_KMPH * 1000.0 / 60.0)
 MOVE_SPEED_MPS = (MOVE_SPEED_MPM / 60.0)
 MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
@@ -24,7 +24,7 @@ MOVE_SPEED_PPS = (MOVE_SPEED_MPS * PIXEL_PER_METER)
 # zombie Action Speed
 TIME_PER_ACTION = 4.0
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-FRAMES_PER_ACTION = 4.0
+FRAMES_PER_ACTION = 5.0
 GIMMIK_PER_ACTION = 6
 OUT_PER_ACTION = 12
 
@@ -46,11 +46,11 @@ sprite = {
 
     'Stun_1': [[0, 1237], [73, 1393]], 'Stun_2': [[74, 1237], [152, 1393]],
 
-    '1': [[0, 1394], [65, 1569]], '2': [[66, 1394], [137, 1569]], '3': [[138, 1394], [231, 1569]], '4': [[232, 1394], [311, 1569]], '5': [[312, 1394], [402, 1569]], '6': [[403, 1394], [467, 1569]],
+    'intro_1': [[0, 1394], [65, 1575]], 'intro_2': [[66, 1394], [137, 1575]], 'intro_3': [[138, 1394], [231, 1575]], 'intro_4': [[232, 1394], [311, 1575]], '5': [[312, 1394], [402, 1575]], '6': [[403, 1394], [467, 1575]],
 
-    'Stun_Hit': [[0, 1570], [59, 1762]], 'Hit_-1': [[60, 1570], [146, 1762]], 'Hit_1': [[147, 1570], [225, 1762]], '4': [[226, 1570], [330, 1762]], '5': [[331, 1570], [405, 1762]], '6': [[406, 1570], [501, 1762]],
-
-    '1': [[0, 1763], [102, 1944]], '2': [[103, 1763], [203, 1944]], '3': [[204, 1763], [306, 1944]], '4': [[307, 1763], [384, 1944]], '5': [[385, 1763], [450, 1944]],
+    'Stun_Hit': [[0, 1576], [59, 1768]], 'Hit_-1': [[60, 1576], [146, 1768]], 'Hit_1': [[147, 1576], [225, 1768]], '4': [[226, 1576], [330, 1768]], 'knockdown_1': [[331, 1576], [405, 1768]], 'knockdown_2': [[406, 1576], [501, 1768]],
+    'knockdown_1_R': [[405, 1570], [331, 1768]],
+    'knockdown_3': [[0, 1769], [102, 1944]], 'revive_1': [[103, 1769], [203, 1944]], 'revive_2': [[204, 1769], [306, 1944]], '4': [[307, 1769], [384, 1944]], '5': [[385, 1769], [450, 1944]],
 }
 
 class Enemy:
@@ -59,12 +59,19 @@ class Enemy:
 
     def __init__(self):
 
-        self.x, self.y = 400, 300
+        self.x, self.y = self.origin_x, self.origin_y = self.start_x, self.start_y =400, 300
         self.dir = 0 # 1: 오른쪽, -1:왼쪽
-        self.hp = 10
+        self.hp = 1600
         self.stance = -1  # 1: 상단, -1: 하단
+
+        self.t = 0.0
+        self.distance = math.sqrt((self.x - 1280) ** 2 + (self.y - 1024) ** 2)
         self.is_stunned = False
         self.stun_time = None
+
+        self.knockdowned = False
+        self.knockdown_x, self.knockdown_y = 500, 350
+        self.knockdown_cnt = 0
 
         self.prev_state = None
         self.state = 'Idle'
@@ -84,13 +91,18 @@ class Enemy:
 
     def update(self):
         self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
-        self.output_size_w = self.clip_w * 3
-        self.output_size_h = self.clip_h * 3
+        self.output_size_w = self.clip_w
+        self.output_size_h = self.clip_h
         self.bt.run()
-        print(self.state)
-        print(self.stance)
-        print(self.dir)
-        print(self.is_stunned)
+        if self.hp <= 0:
+            self.knockdowned = True
+        print(f'{self.state=} ')
+        print(f'{self.stance=} ')
+        print(f'{self.dir=} ')
+        print(f'{self.hp=} ')
+        print(f'{self.is_stunned=} ')
+        print(f'{self.knockdowned=} ')
+        print(f'{self.knockdown_cnt=} ')
         pass
 
 
@@ -100,11 +112,16 @@ class Enemy:
         sx, sy = sprite[self.sprite_index][0]
         ex, ey = sprite[self.sprite_index][1]
         self.clip_x, self.clip_y, self.clip_w, self.clip_h = game_framework.carculate_image_position(self, sx, sy, ex, ey)
-
-        self.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
-                                       0, 'h',
-                                       self.x, self.y + 120,
-                                       self.output_size_w, self.output_size_h)
+        if self.dir == 1:
+            self.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
+                                           0, '',
+                                           self.x, self.y + 120,
+                                           self.output_size_w, self.output_size_h)
+        else:
+            self.image.clip_composite_draw(self.clip_x, self.clip_y, self.clip_w, self.clip_h,
+                                           0, 'h',
+                                           self.x, self.y + 120,
+                                           self.output_size_w, self.output_size_h)
         draw_rectangle(*self.get_bb())
         pass
 
@@ -112,8 +129,7 @@ class Enemy:
         pass
 
     def handle_collision(self, group, other):
-        if group == 'boy:enemy':
-            self.hp -= 10
+        pass
 
     def stance_dir_set(self):
         self.stance = random.choice([1, -1])
@@ -125,10 +141,13 @@ class Enemy:
             self.frame = 0.0
             self.prev_state = 'Idle'
         self.state = 'Idle'
-        if self.frame < 2:
+        if int(self.frame) % 2 == 0:
             self.sprite_index = f'Idle_{self.stance}_1'
         else:
             self.sprite_index = f'Idle_{self.stance}_2'
+
+        if self.knockdowned:
+            return BehaviorTree.SUCCESS
         if self.frame < FRAMES_PER_ACTION - 1.0:
             return BehaviorTree.RUNNING
         else:
@@ -140,10 +159,13 @@ class Enemy:
             self.frame = 0.0
             self.prev_state = 'Move'
         self.state = 'Move'
-        if self.frame < 2:
+        if self.frame < 1:
             self.sprite_index = f'Move_1'
         else:
             self.sprite_index = f'Move_2'
+
+        if self.knockdowned:
+            return BehaviorTree.SUCCESS
         if int(self.frame) == FRAMES_PER_ACTION-1:
             return BehaviorTree.SUCCESS
         else:
@@ -160,6 +182,9 @@ class Enemy:
             self.sprite_index = f'Atk_{self.stance}_3'
         else:
             self.sprite_index = f'Atk_{self.stance}_2'
+
+        if self.knockdowned:
+            return BehaviorTree.SUCCESS
         if int(self.frame) == FRAMES_PER_ACTION-1:
             return BehaviorTree.SUCCESS
         else:
@@ -195,9 +220,69 @@ class Enemy:
         if self.prev_state != 'Hit':
             self.frame = 0.0
             self.prev_state = 'Hit'
+            self.hp -= 1
         self.state = 'Hit'
         self.sprite_index = f'Hit_{-1*self.stance}'
         if int(self.frame) == FRAMES_PER_ACTION - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
+
+    def knockdown(self):
+        if self.prev_state != 'knockdown':
+            self.frame = 0.0
+            self.prev_state = 'knockdown'
+        self.state = 'knockdown'
+        if self.x != self.knockdown_x or self.y != self.knockdown_y:
+            if self.t < 1.0:
+                # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.y = (1.0 - self.t) * self.start_y + self.t * (self.knockdown_y)
+                self.x = (1.0 - self.t) * self.start_x + self.t * (self.knockdown_x)
+                if self.frame == 0:
+                    self.sprite_index = f'knockdown_2'
+                else:
+                    self.dir = -1 * self.dir
+            else:
+                self.x = self.start_x = self.knockdown_x
+                self.y = self.start_y = self.knockdown_y
+                self.t = 0.0
+                self.frame = 0
+        else:
+            self.sprite_index = f'knockdown_3'
+        if not self.knockdowned:
+            return BehaviorTree.FAIL
+        elif self.sprite_index == f'knockdown_3' and int(self.frame) == FRAMES_PER_ACTION - 1:
+            return BehaviorTree.SUCCESS
+        else:
+            return BehaviorTree.RUNNING
+
+    def Revive(self):
+        if self.prev_state != 'Revive':
+            self.frame = 0.0
+            self.prev_state = 'Revive'
+        self.state = 'Revive'
+
+        if self.frame < 1:
+            self.sprite_index = f'revive_1'
+        else:
+            self.sprite_index = f'revive_2'
+
+        if self.x != self.origin_x or self.y != self.origin_y:
+            if self.t < 1.0:
+                # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
+                self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
+                self.y = (1.0 - self.t) * self.start_y + self.t * (self.origin_y)
+                self.x = (1.0 - self.t) * self.start_x + self.t * (self.origin_x)
+            else:
+                self.x = self.start_x = self.origin_x
+                self.y = self.start_y = self.origin_y
+                self.t = 0.0
+
+        if self.x == self.origin_x and self.y == self.origin_y:
+            self.knockdowned = False
+            self.knockdown_cnt += 1
+            self.hp = 1600 // (self.knockdown_cnt+1)
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING
@@ -214,11 +299,7 @@ class Enemy:
         if self.state == 'Atk' and common.boy.atk == True:
             self.is_stunned = True
             self.stun_time = get_time()
-            if self.prev_state != 'stun_hit':
-                self.frame = 0.0
-                self.prev_state = 'stun_hit'
-            self.state = 'stun_hit'
-            self.sprite_index = f'Stun_Hit'
+            self.hp -= 160
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.FAIL
@@ -233,15 +314,15 @@ class Enemy:
         elif common.boy.stance == 1 and self.stance == 1:
             return BehaviorTree.SUCCESS
         else:
+            self.hp -= 1
             return BehaviorTree.FAIL
 
     def boy_atk_chk(self):
         #boy가 공격 중인지 확인
-        if common.boy.atk == True:
+        if common.boy.atk:
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.FAIL
-
 
     def build_behavior_tree(self):
         a_stance_dir_set = Action('Set stance and direction', self.stance_dir_set)
@@ -253,6 +334,9 @@ class Enemy:
         a_Def = Action('a_DEFEND', self.Defend)
         a_Hit = Action('a_HIT', self.Hit)
         a_Stun = Action('a_STUN', self.Stun)
+
+        a_knockdown = Action('a_knockdown', self.knockdown)
+        a_Revive = Action('a_Revive', self.Revive)
 
         a_move_chk = Action('move chk', self.move_chk)
 
@@ -269,6 +353,8 @@ class Enemy:
         root = Hit = Selector('Hit', a_move_chk, a_atk_ing_chk, def_chk, a_Hit)
         root = Hit_chk = Sequence('Hit chk', c_boy_atk_chk, Hit)
 
-        root = Selector('Enemy BT', stun_chk, Hit_chk, Non_Hit)
+        root = Knockdown = Sequence('Knockdown', a_knockdown, a_Revive)
+
+        root = Selector('Enemy BT', Knockdown, stun_chk, Hit_chk, Non_Hit)
 
         self.bt = BehaviorTree(root)
