@@ -6,6 +6,7 @@ import common
 import game_world
 import game_framework
 from game_framework import carculate_image_position
+import result_mode
 
 from state_machine import StateMachine
 
@@ -19,6 +20,7 @@ done = lambda e: e[0] == 'DONE'
 up_done = lambda e: e[0] == 'UP_DONE'
 
 win = lambda e: e[0] == 'WIN'
+hit = lambda e: e[0] == 'HIT'
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
@@ -78,7 +80,7 @@ sprite_size = {
     '1': [[8, 145], [71, 248]], '2': [[73, 145], [128, 248]], '3': [[130, 145], [209, 248]], '4': [[211, 145], [322, 248]], '5': [[324, 145], [395, 248]],
     '6': [[397, 145], [460, 248]], '7': [[462, 145], [549, 248]], '8': [[551, 145], [622, 248]], '9': [[624, 145], [711, 248]],
 
-    '1': [[8, 250], [95, 385]], '2': [[97, 250], [184, 385]], '3': [[186, 250], [249, 385]], '4': [[251, 250], [322, 385]], '5': [[324, 250], [403, 385]],
+    '1': [[8, 250], [95, 385]], 'hit': [[97, 250], [184, 385]], '3': [[186, 250], [249, 385]], '4': [[251, 250], [322, 385]], '5': [[324, 250], [403, 385]],
     '6': [[405, 250], [468, 385]], '7': [[470, 250], [533, 385]], '8': [[535, 250], [590, 385]], '9': [[592, 250], [679, 385]], '10': [[681, 250], [784, 385]],
 
     'win5': [[8, 387], [79, 538]], 'win6': [[81, 387], [152, 538]], '3': [[154, 387], [225, 538]],'4': [[227, 387], [314, 538]], '5': [[316, 387], [379, 538]],
@@ -315,9 +317,42 @@ class Attack:
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                          self.boy.x,self.boy.y+60, self.boy.output_size_w, self.boy.output_size_h)
 
+
+class Hit:
+    def __init__(self, boy):
+        self.boy = boy
+        self.enter_time = 0
+
+    def enter(self, e):
+        self.enter_time = get_time()
+        sx, sy = sprite_size['hit'][0]
+        ex, ey = sprite_size['hit'][1]
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy,                                                                                   ex, ey)
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+
+        if get_time() - self.enter_time > 0.3:
+            self.boy.state_machine.handle_state_event(('TIMEOUT', None))
+
+    def draw(self):
+        if common.enemy.dir == 1: #right
+            self.boy.image.clip_composite_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                               0, 'h', self.boy.x,
+                                               self.boy.y+100, self.boy.output_size_w, self.boy.output_size_h)
+        elif common.enemy.dir == -1: #left
+            self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                     self.boy.x, self.boy.y+100,
+                                     self.boy.output_size_w, self.boy.output_size_h)
+
+
 class Win:
     def __init__(self, boy):
         self.boy = boy
+        self.end = False
         pass
 
     def enter(self, e):
@@ -327,11 +362,16 @@ class Win:
         pass
 
     def do(self):
-        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
-        sprite_index = f'win{int(self.boy.frame)+1}'
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 7
+        if self.boy.frame < 6:
+            sprite_index = f'win{int(self.boy.frame)+1}'
+        else:
+            sprite_index = 'win6'
         sx, sy = sprite_size[sprite_index][0]
         ex, ey = sprite_size[sprite_index][1]
         self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+        if self.boy.frame >= 6:
+            self.end = True
 
     def draw(self):
         self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
@@ -345,7 +385,7 @@ class Boy:
         self.font = load_font('ENCR10B.TTF', 16)
 
         self.hp = 1600
-        self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 100
+        self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 200
         self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
         self.stance = -1  # 1: 상단, -1: 하단
         self.atk = False
@@ -365,6 +405,7 @@ class Boy:
         self.ATTACK = Attack(self)
         self.RETURN_IDLE = return_idle(self)
         self.WIN = Win(self)
+        self.HIT = Hit(self)
         self.state_machine = StateMachine(
             self.IDLE,
             {
@@ -372,7 +413,8 @@ class Boy:
                     z_down: self.ATTACK, x_down: self.ATTACK,
                     up_down: self.GUARD,
                     down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE,
-                    win: self.WIN
+                    win: self.WIN,
+                    hit: self.HIT
                 },
                 self.GUARD: {
                     up_up: self.RETURN_IDLE,
@@ -394,6 +436,9 @@ class Boy:
                     win: self.WIN
                 },
                 self.WIN : {
+                },
+                self.HIT : {
+                    time_out: self.IDLE
                 }
             }
         )
@@ -401,15 +446,17 @@ class Boy:
 
     def update(self):
         self.state_machine.update()
-        self.output_size_w = self.clip_w
-        self.output_size_h = self.clip_h
+        self.output_size_w = self.clip_w *3
+        self.output_size_h = self.clip_h *3
+        if common.enemy.dead:
+            self.state_machine.handle_state_event(('WIN', None))
+        if common.enemy.state == 'Atk' and int(common.enemy.frame) == 1 and self.dir == 0:
+            self.state_machine.handle_state_event(('HIT', None))
 
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
 
     def draw(self):
-        if common.enemy.dead:
-            self.state_machine.handle_state_event(('WIN', None))
         self.state_machine.draw()
         self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
         draw_rectangle(*self.get_bb())

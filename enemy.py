@@ -70,7 +70,7 @@ class Enemy:
         self.stun_time = None
 
         self.knockdowned = False
-        self.knockdown_x, self.knockdown_y = 500, 350
+        self.knockdown_x, self.knockdown_y = 100, 350
         self.knockdown_cnt = 0
 
         self.prev_state = None
@@ -93,8 +93,8 @@ class Enemy:
 
     def update(self):
         self.frame = (self.frame + OUT_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
-        self.output_size_w = self.clip_w
-        self.output_size_h = self.clip_h
+        self.output_size_w = self.clip_w *3
+        self.output_size_h = self.clip_h *3
         self.bt.run()
 
         if self.hp <= 0:
@@ -187,6 +187,8 @@ class Enemy:
             self.sprite_index = f'Atk_{self.stance}_3'
         else:
             self.sprite_index = f'Atk_{self.stance}_2'
+            if common.boy.dir == 0:
+                common.boy.hp -= 1
 
         if self.knockdowned:
             return BehaviorTree.SUCCESS
@@ -238,18 +240,16 @@ class Enemy:
             self.frame = 0.0
             self.prev_state = 'knockdown'
         self.state = 'knockdown'
-        if self.x != self.knockdown_x or self.y != self.knockdown_y:
+        if self.y != self.knockdown_y:
             if self.t < 1.0:
                 # self.pos = (1.0 - self.t) * self.start_pos + self.t * self.end_pos
                 self.t += MOVE_SPEED_PPS * game_framework.frame_time / self.distance
                 self.y = (1.0 - self.t) * self.start_y + self.t * (self.knockdown_y)
-                self.x = (1.0 - self.t) * self.start_x + self.t * (self.knockdown_x)
                 if self.frame == 0:
                     self.sprite_index = f'knockdown_2'
                 else:
                     self.dir = -1 * self.dir
             else:
-                self.x = self.start_x = self.knockdown_x
                 self.y = self.start_y = self.knockdown_y
                 self.t = 0.0
                 self.frame = 0

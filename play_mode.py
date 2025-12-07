@@ -17,14 +17,12 @@ def handle_events():
     global start_time
     event_list = get_events()
     for event in event_list:
+        if event.type == SDL_KEYDOWN and event.key == SDLK_SPACE:
+            common.enemy.hp = 0
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
-        elif common.enemy.dead == True:
-            record = get_time() - start_time
-            game_framework.save_record_to_file(record)
-            game_framework.change_mode(result_mode)
         else:
             common.boy.handle_event(event)
 
@@ -52,6 +50,11 @@ def init():
 def update():
     game_world.update()
     game_world.handle_collision()
+
+    if common.boy.WIN.end:
+        record = get_time() - start_time
+        game_framework.save_record_to_file(record)
+        game_framework.change_mode(result_mode)
 
 def draw():
     clear_canvas()
