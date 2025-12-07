@@ -93,7 +93,7 @@ def reposition(self):
     self.frame = 0
 
 
-class Idle:
+class return_idle:
 
     def __init__(self, boy):
         self.boy = boy
@@ -125,6 +125,7 @@ class Idle:
             sx, sy = sprite_size['IDle'][0]
             ex, ey = sprite_size['IDle'][1]
             self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+            self.boy.state_machine.handle_state_event(('DONE', None))
 
     def draw(self):
         #composite이 필요한 우측 복귀를 출력하기 위함
@@ -136,6 +137,32 @@ class Idle:
             self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                      self.boy.x, self.boy.y,
                                      self.boy.output_size_w, self.boy.output_size_h)
+
+
+class Idle:
+
+    def __init__(self, boy):
+        self.boy = boy
+
+    def enter(self, e):
+        self.boy.wait_time = get_time()
+        self.boy.dir = 0
+        self.boy.stance = -1  # idle시 하단 자세
+        self.boy.atk = False
+
+    def exit(self, e):
+        reposition(self.boy)
+        pass
+
+    def do(self):
+        sx, sy = sprite_size['IDle'][0]
+        ex, ey = sprite_size['IDle'][1]
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+
+    def draw(self):
+        self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                self.boy.x, self.boy.y,
+                                self.boy.output_size_w, self.boy.output_size_h)
 
 
 class Guard:
@@ -245,6 +272,7 @@ class Attack:
         self.boy.atk = True
 
     def exit(self, e):
+        self.boy.atk = False
         pass
 
     def do(self):
@@ -310,6 +338,7 @@ class Boy:
         self.GUARD = Guard(self)
         self.MOVE = Move(self)
         self.ATTACK = Attack(self)
+        self.RETURN_IDLE = return_idle(self)
         self.state_machine = StateMachine(
             self.IDLE,
             {
@@ -319,16 +348,19 @@ class Boy:
                     down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
                 },
                 self.GUARD: {
-                    up_up: self.IDLE,
+                    up_up: self.RETURN_IDLE,
                     z_down: self.ATTACK, x_down: self.ATTACK,
                 },
                 self.MOVE : {
-                    down_up: self.IDLE,
-                    right_up: self.IDLE, left_up: self.IDLE,
-                    time_out: self.IDLE,
+                    down_up: self.RETURN_IDLE,
+                    right_up: self.RETURN_IDLE, left_up: self.RETURN_IDLE,
+                    time_out: self.RETURN_IDLE,
                 },
                 self.ATTACK : {
                     time_out: self.IDLE,
+                },
+                self.RETURN_IDLE : {
+                    done: self.IDLE,
                 }
             }
         )
@@ -336,8 +368,8 @@ class Boy:
 
     def update(self):
         self.state_machine.update()
-        self.output_size_w = self.clip_w * 3
-        self.output_size_h = self.clip_h * 3
+        self.output_size_w = self.clip_w
+        self.output_size_h = self.clip_h
 
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
