@@ -64,7 +64,7 @@ class Enemy:
 
     def __init__(self):
 
-        self.x, self.y = self.origin_x, self.origin_y = self.start_x, self.start_y =400, 300
+        self.x, self.y = self.origin_x, self.origin_y = self.start_x, self.start_y =400, 200
         self.dir = 0 # 1: 오른쪽, -1:왼쪽
         self.hp = 1600
         self.stance = -1  # 1: 상단, -1: 하단

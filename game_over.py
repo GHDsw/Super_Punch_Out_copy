@@ -8,6 +8,7 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 22
 
 image = None
+bgm = None
 frame = 0
 
 def pause():
@@ -17,8 +18,11 @@ def resume():
     pass
 
 def init():
-    global image, font, lines
+    global image, font, lines, bgm
     image = load_image('./image/game_over.png')
+    bgm = load_music('./audio/Menu.wav')
+    bgm.set_volume(32)
+    bgm.repeat_play()
 
 def finish():
     global image
