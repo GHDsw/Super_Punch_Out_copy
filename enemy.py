@@ -76,6 +76,8 @@ class Enemy:
         self.prev_state = None
         self.state = 'Idle'
 
+        self.dead = False
+
         self.image = load_image('./image/Gabby_Jay.png')
         self.frame = 0
         self.sprite_index = 'Idle_-1_1'
@@ -94,8 +96,10 @@ class Enemy:
         self.output_size_w = self.clip_w
         self.output_size_h = self.clip_h
         self.bt.run()
+
         if self.hp <= 0:
             self.knockdowned = True
+
         print(f'{self.state=} ')
         print(f'{self.stance=} ')
         print(f'{self.dir=} ')
@@ -103,6 +107,7 @@ class Enemy:
         print(f'{self.is_stunned=} ')
         print(f'{self.knockdowned=} ')
         print(f'{self.knockdown_cnt=} ')
+        print(f'{self.dead=} ')
         pass
 
 
@@ -248,6 +253,8 @@ class Enemy:
                 self.y = self.start_y = self.knockdown_y
                 self.t = 0.0
                 self.frame = 0
+                if self.knockdown_cnt>=2:
+                    self.dead = True
         else:
             self.sprite_index = f'knockdown_3'
         if not self.knockdowned:
@@ -278,11 +285,11 @@ class Enemy:
                 self.x = self.start_x = self.origin_x
                 self.y = self.start_y = self.origin_y
                 self.t = 0.0
-
-        if self.x == self.origin_x and self.y == self.origin_y:
-            self.knockdowned = False
-            self.knockdown_cnt += 1
-            self.hp = 1600 // (self.knockdown_cnt+1)
+        if (self.x == self.origin_x and self.y == self.origin_y) or self.dead:
+            if not self.dead:
+                self.knockdowned = False
+                self.knockdown_cnt += 1
+                self.hp = 1600 // (self.knockdown_cnt+1)
             return BehaviorTree.SUCCESS
         else:
             return BehaviorTree.RUNNING

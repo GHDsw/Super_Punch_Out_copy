@@ -18,6 +18,8 @@ time_out = lambda e: e[0] == 'TIMEOUT'
 done = lambda e: e[0] == 'DONE'
 up_done = lambda e: e[0] == 'UP_DONE'
 
+win = lambda e: e[0] == 'WIN'
+
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
 
@@ -79,10 +81,10 @@ sprite_size = {
     '1': [[8, 250], [95, 385]], '2': [[97, 250], [184, 385]], '3': [[186, 250], [249, 385]], '4': [[251, 250], [322, 385]], '5': [[324, 250], [403, 385]],
     '6': [[405, 250], [468, 385]], '7': [[470, 250], [533, 385]], '8': [[535, 250], [590, 385]], '9': [[592, 250], [679, 385]], '10': [[681, 250], [784, 385]],
 
-    '1': [[8, 387], [79, 538]], '2': [[81, 387], [152, 538]], '3': [[154, 387], [225, 538]],'4': [[227, 387], [314, 538]], '5': [[316, 387], [379, 538]],
+    'win5': [[8, 387], [79, 538]], 'win6': [[81, 387], [152, 538]], '3': [[154, 387], [225, 538]],'4': [[227, 387], [314, 538]], '5': [[316, 387], [379, 538]],
     '6': [[381, 387], [460, 538]], '7': [[462, 387], [541, 538]],
 
-    '1': [[8, 540], [87, 667]], '2': [[89, 540], [168, 667]], '3': [[170, 540], [281, 667]],'4': [[283, 540], [354, 667]],
+    'win1': [[8, 540], [87, 667]], 'win2': [[89, 540], [168, 667]], 'win3': [[170, 540], [281, 667]],'win4': [[283, 540], [354, 667]],
 
     }
 
@@ -313,13 +315,36 @@ class Attack:
                 self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
                                          self.boy.x,self.boy.y+60, self.boy.output_size_w, self.boy.output_size_h)
 
+class Win:
+    def __init__(self, boy):
+        self.boy = boy
+        pass
+
+    def enter(self, e):
+        pass
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.boy.frame = (self.boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
+        sprite_index = f'win{int(self.boy.frame)+1}'
+        sx, sy = sprite_size[sprite_index][0]
+        ex, ey = sprite_size[sprite_index][1]
+        self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h = carculate_image_position(self.boy, sx, sy, ex, ey)
+
+    def draw(self):
+        self.boy.image.clip_draw(self.boy.clip_x, self.boy.clip_y, self.boy.clip_w, self.boy.clip_h,
+                                 self.boy.x, self.boy.y,
+                                 self.boy.output_size_w, self.boy.output_size_h)
+
 
 class Boy:
     def __init__(self):
 
         self.font = load_font('ENCR10B.TTF', 16)
 
-        self.hp = 10
+        self.hp = 1600
         self.origin_x, self.origin_y = self.x, self.y = self.start_x, self.start_y = 400, 100
         self.dir = 0 #0: idle, 1: defense, -1:backstep , -2: left, 2:right
         self.stance = -1  # 1: 상단, -1: 하단
@@ -339,28 +364,36 @@ class Boy:
         self.MOVE = Move(self)
         self.ATTACK = Attack(self)
         self.RETURN_IDLE = return_idle(self)
+        self.WIN = Win(self)
         self.state_machine = StateMachine(
             self.IDLE,
             {
                 self.IDLE : {
                     z_down: self.ATTACK, x_down: self.ATTACK,
                     up_down: self.GUARD,
-                    down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE
+                    down_down: self.MOVE, right_down: self.MOVE, left_down: self.MOVE,
+                    win: self.WIN
                 },
                 self.GUARD: {
                     up_up: self.RETURN_IDLE,
                     z_down: self.ATTACK, x_down: self.ATTACK,
+                    win: self.WIN
                 },
                 self.MOVE : {
                     down_up: self.RETURN_IDLE,
                     right_up: self.RETURN_IDLE, left_up: self.RETURN_IDLE,
                     time_out: self.RETURN_IDLE,
+                    win: self.WIN
                 },
                 self.ATTACK : {
                     time_out: self.IDLE,
+                    win: self.WIN
                 },
                 self.RETURN_IDLE : {
                     done: self.IDLE,
+                    win: self.WIN
+                },
+                self.WIN : {
                 }
             }
         )
@@ -375,6 +408,8 @@ class Boy:
         self.state_machine.handle_state_event(('INPUT', event))
 
     def draw(self):
+        if common.enemy.dead:
+            self.state_machine.handle_state_event(('WIN', None))
         self.state_machine.draw()
         self.font.draw(self.x-10, self.y + 50, f'{self.hp:02d}', (255, 255, 0))
         draw_rectangle(*self.get_bb())
@@ -384,12 +419,4 @@ class Boy:
         return self.x - self.clip_w/2, self.y - self.clip_h/2, self.x + self.clip_w/2, self.y + self.clip_h/2
 
     def handle_collision(self, group, other):
-        if group == 'boy:enemy':
-            pass
-    #     if group == 'boy:ball':
-    #         self.ball_count += 1
-    #         # 충돌한 ball은 ball 자신이 제거하도록
-    #     if group == 'boy:zombie':
-    #         # 게임 종료 처리
-    #         game_framework.quit()
-    #         pass
+        pass

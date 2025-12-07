@@ -21,7 +21,7 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
-        elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+        elif common.enemy.dead == True:
             record = get_time() - start_time
             game_framework.save_record_to_file(record)
             game_framework.change_mode(result_mode)
@@ -31,8 +31,6 @@ def handle_events():
 def init():
     global state_bar
     global start_time
-    #global balls
-    # global zombies
 
     rings = Rings()
     game_world.add_object(rings, 0)
@@ -50,26 +48,6 @@ def init():
     game_world.add_collision_pair('boy:enemy', common.boy, None)
 
     start_time = get_time()
-
-    # balls = [Ball(random.randint(100, 1600-100), 60,0) for i in range(30)]
-    # game_world.add_objects(balls, 1)
-    # game_world.add_collision_pair('boy:zombie', boy, None)
-
-    #boy와 ball 사이의 충돌 검사가 필요하다는 정보 추가
-    # game_world.add_collision_pair('boy:ball',boy, None)
-    # for ball in balls:
-    #     if ball.y > 60:
-    #         game_world.add_collision_pair('zombie:ball', None, ball)
-    #     else:
-    #         game_world.add_collision_pair('boy:ball', None, ball)
-
-    # zombies = [Zombie() for i in range(4)]
-    # game_world.add_objects(zombies, 1)
-    #
-    # for zombie in zombies:
-    #     game_world.add_collision_pair('zombie:ball', zombie, None)
-    #     game_world.add_collision_pair('boy:zombie', None, zombie)
-
 
 def update():
     game_world.update()
