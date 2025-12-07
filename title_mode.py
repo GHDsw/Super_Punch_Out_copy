@@ -12,7 +12,13 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION_ring = 8
 FRAMES_PER_ACTION_logo = 3
 
+MENU_TITLE = "PRESS SPACE"
+TITLE_POS = (400, 100)
+CHAR_WIDTH_EST = 20  # 글자 폭 추정치(중앙 정렬 계산용)
+
 image = None
+font = None
+
 title_start_time = 0.0
 frame_ring = 0
 frame_logo = 0
@@ -27,16 +33,22 @@ def resume():
     pass
 
 def init():
-    global image, bgm
-
+    global image, bgm, font
     image = load_image('./image/Intro,Menu.png')
     bgm = load_music('./audio/Title.wav')
     bgm.set_volume(32)
     bgm.play()
+    try:
+        font = load_font('ENCR10B.TTF', 32)
+    except:
+        font = None
 
 def finish():
-    global image
+    global image, font
     del image
+    if font is not None:
+        del font
+        font = None
 
 def update():
     # 로고 모드 2초간 지속
@@ -51,6 +63,7 @@ def update():
     pass
 
 def draw():
+    global font
     clear_canvas()
     sxR, syR = sprite_size['ring'][0]
     exR, eyR = sprite_size['ring'][1]
@@ -80,6 +93,23 @@ def draw():
     image.clip_draw(clip_x + clip_w * (int(frame_logo) % 3+1) + gap * (int(frame_logo) % 3+1),
                     clip_y,
                     clip_w, clip_h, 400,300, 800, 600)
+
+    def draw_centered(text, pos_y, color=(255, 255, 255)):
+        x_center = 400
+        w = len(text) * CHAR_WIDTH_EST
+        start_x = x_center - w / 2
+        if font:
+            font.draw(start_x, pos_y, text, color)
+        else:
+            # 폰트 없을 때는 사각형으로 대체
+            for i, ch in enumerate(text):
+                draw_rectangle(start_x + i * CHAR_WIDTH_EST - 8, pos_y - 8, start_x + i * CHAR_WIDTH_EST + 8, pos_y + 8)
+
+        return start_x
+
+    # 제목
+    draw_centered(MENU_TITLE, TITLE_POS[1], (255, 255, 0))
+
     update_canvas()
 
 def handle_events():
