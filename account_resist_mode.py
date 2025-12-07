@@ -4,7 +4,7 @@ from pico2d import *
 import os
 import string
 
-import play_mode
+import menu_mode
 
 sprite_size = {'alphabet_table': [[1690, 2845], [1849, 2952]],
                'a': [[1690, 2845], [1996, 2856]],
@@ -173,7 +173,7 @@ def handle_events():
         elif(event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
             if selected:
                 save_selected_to_file()
-                game_framework.change_mode(play_mode)
+                game_framework.change_mode(menu_mode)
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_LEFT:
                 arrow_col = max(0, arrow_col - 1)
