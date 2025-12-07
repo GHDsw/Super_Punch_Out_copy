@@ -170,9 +170,10 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
-        elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
-            save_selected_to_file()
-            game_framework.change_mode(play_mode)
+        elif(event.type, event.key) == (SDL_KEYDOWN, SDLK_SPACE):
+            if selected:
+                save_selected_to_file()
+                game_framework.change_mode(play_mode)
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_LEFT:
                 arrow_col = max(0, arrow_col - 1)

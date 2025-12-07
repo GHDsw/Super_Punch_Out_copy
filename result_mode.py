@@ -27,41 +27,61 @@ def pause():
 def resume():
     pass
 
-def _load_sorted_records_by_record(path):
+def _load_sorted_and_trim_records(path, max_entries=10):
     """
-    각 라인에서 '첫 번째 공백 문자 이후'부터 숫자를 찾아 파싱.
-    - 공백이 있으면 공백 뒤 부분에서 숫자를 검색
-    - 공백이 없으면 전체 라인에서 숫자를 검색 (기존 동작 보존)
-    숫자가 있으면 숫자 기준 내림차순, 없으면 문자열 기준 내림차순으로 반환
+    `recode.txt`를 읽어
+    - 각 라인을 공백으로 분리하여 마지막 토큰을 `recode`로 간주
+    - recode가 숫자가 아니면 해당 라인 버림
+    - recode 기준 내림차순 정렬, 동점일 경우 ID(문자열) 내림차순
+    - 상위 `max_entries`만 파일에 덮어쓰기 저장하고 그 리스트를 반환
     """
-    numeric = []
-    non_numeric = []
-    num_re = re.compile(r'([0-9]+(?:\.[0-9]+)?)')
+    parsed = []
     try:
         with open(path, 'r', encoding='utf-8') as f:
             for raw_line in f.read().splitlines():
-                line = raw_line  # 원문 보존
-                # 첫 공백 이후를 검색 영역으로 설정
-                m_space = re.search(r'\s', line)
-                if m_space:
-                    search_area = line[m_space.end():]  # 첫 공백 문자 다음부터
-                else:
-                    search_area = line  # 공백 없으면 전체 라인
-                m = num_re.search(search_area)
-                if m:
-                    try:
-                        val = float(m.group(1))
-                        numeric.append((val, line))
-                    except Exception:
-                        non_numeric.append(line)
-                else:
-                    non_numeric.append(line)
+                line = raw_line.strip()
+                if not line:
+                    continue
+                tokens = line.split()
+                if len(tokens) < 2:
+                    # recode가 없는 라인 -> 무시
+                    continue
+                rec_token = tokens[-1]
+                id_token = ' '.join(tokens[:-1])
+                try:
+                    val = float(rec_token)
+                    parsed.append((val, id_token))
+                except ValueError:
+                    # recode가 숫자가 아니면 무시
+                    continue
     except Exception:
         return []
 
-    numeric.sort(key=lambda x: x[0], reverse=True)
-    non_numeric.sort(reverse=True)
-    return [line for _, line in numeric] + non_numeric
+    # recode(수치) 내림차순, 동점이면 ID 내림차순
+    parsed.sort(key=lambda x: (x[0], x[1]), reverse=True)
+
+    # 상위 max_entries만 보존
+    top = parsed[:max_entries]
+
+    # 파일에 덮어쓰기: "ID recode" 형식으로 저장
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            out_lines = []
+            for val, id_str in top:
+                # 정수면 정수 형태로, 아니면 소수 형태로 저장
+                if float(val).is_integer():
+                    rec_str = str(int(val))
+                else:
+                    rec_str = str(val)
+                out_line = f"{id_str} {rec_str}"
+                out_lines.append(out_line)
+                f.write(out_line + "\n")
+    except Exception:
+        # 쓰기 실패 시에는 그냥 표시용 리스트만 리턴
+        out_lines = [f"{id_str} {int(val) if float(val).is_integer() else val}" for val, id_str in top]
+
+    return out_lines
+
 
 def init():
     global image, font, lines
@@ -71,8 +91,8 @@ def init():
     except:
         font = None
     try:
-        path = os.path.join(os.getcwd(), 'record.txt')
-        lines = _load_sorted_records_by_record(path)
+        path = os.path.join(os.getcwd(), 'record.txt')  # 파일명은 `recode.txt`
+        lines = _load_sorted_and_trim_records(path, max_entries=10)
     except Exception:
         lines = []
 
